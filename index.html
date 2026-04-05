@@ -201,6 +201,30 @@
 
     #end-move-btn:hover { background: #d35400; }
 
+    #create-player-btn {
+      margin-top: 8px;
+      padding: 8px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background: #2980b9;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.15s;
+    }
+
+    #create-player-btn:hover { background: #1f6da0; }
+
+    .cell.placement-target {
+      background: #2ecc71 !important;
+      filter: brightness(1.2);
+      cursor: crosshair;
+    }
+
+    .cell.placement-target:hover { filter: brightness(1.5); }
+
     /* ── Team stats panel ────────────────────────── */
 
     #team-stats {
@@ -374,6 +398,7 @@
 
   <p id="turn-counter"></p>
   <button id="end-move-btn">End Move</button>
+  <button id="create-player-btn">Create Player</button>
   <div id="team-stats"></div>
   <div id="battle-overlay" style="display:none;">
     <div id="battle-modal"></div>

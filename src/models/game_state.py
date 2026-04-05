@@ -17,6 +17,16 @@ STARTING_PLAYERS = [
 
 DEFENDER_BONUS = 8
 
+RECRUIT_COST = {
+    'Grand Army of the Republic': {'Money': 150, 'RawMaterials': 75},
+    'Confederacy of Independent Systems': {'Money': 75, 'RawMaterials': 150},
+}
+
+TEAM_UNIT_PREFIX = {
+    'Grand Army of the Republic': 'Clone Trooper',
+    'Confederacy of Independent Systems': 'Battle Droid',
+}
+
 
 class Battle:
     def __init__(
@@ -339,6 +349,52 @@ class GameState:
 
         msg = GameState._build_message(grid, players[0], 1, plannets)
         return GameState(grid, players, plannets, 0, 1, 'playing', msg)
+
+    @property
+    def can_recruit(self) -> bool:
+        team = self.active_player.team
+        cost = RECRUIT_COST.get(team)
+        res = self.team_resources.get(team)
+        if not cost or not res:
+            return False
+        return res.get('Money', 0) >= cost['Money'] and res.get('RawMaterials', 0) >= cost['RawMaterials']
+
+    def recruit_player(self, position: Position) -> MoveResult:
+        team = self.active_player.team
+        cost = RECRUIT_COST.get(team)
+        res = self.team_resources.get(team)
+
+        if not cost or not res or res.get('Money', 0) < cost['Money'] or res.get('RawMaterials', 0) < cost['RawMaterials']:
+            return MoveResult.failure('Not enough resources to recruit a new unit')
+
+        cell = self.grid[position.row][position.col]
+        if not cell.get('accessible', False):
+            return MoveResult.failure('That cell is not accessible')
+
+        in_friendly_orbit = any(
+            p.current_owner == team
+            and any(o.row == position.row and o.col == position.col for o in p.cells_in_orbit)
+            for p in self.plannets
+        )
+        if not in_friendly_orbit:
+            return MoveResult.failure('New unit must be placed in orbit of a planet you control')
+
+        next_id = max(p.id for p in self.players) + 1
+        prefix = TEAM_UNIT_PREFIX.get(team, 'Unit')
+        team_count = sum(1 for p in self.players if p.team == team) + 1
+        name = f'{prefix} {team_count}'
+
+        new_player = Player(next_id, name, team, position)
+        new_players = _clone_players(self.players) + [new_player]
+
+        new_team_resources = {t: dict(r) for t, r in self.team_resources.items()}
+        new_team_resources[team]['Money'] -= cost['Money']
+        new_team_resources[team]['RawMaterials'] -= cost['RawMaterials']
+
+        msg = f'{name} recruited'
+        return MoveResult.success(
+            GameState(self.grid, new_players, self.plannets, self.active_player_index, self.turn, 'playing', msg, new_team_resources)
+        )
 
     def apply_move(self, target_pos: Position) -> MoveResult:
         active = self.active_player

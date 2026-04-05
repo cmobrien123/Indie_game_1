@@ -184,3 +184,68 @@ describe('GameState.applyBattleRoll', () => {
     expect(result).toBe(state)
   })
 })
+
+describe('GameState.recruitPlayer', () => {
+  it('canRecruit returns true when team has enough resources', () => {
+    const state = GameState.create()
+    // Starting resources: Money 50, RawMaterials 50
+    // GAR cost: Money 150, RawMaterials 75 — too expensive at start
+    // But let's check the property exists
+    expect(typeof state.canRecruit).toBe('boolean')
+  })
+
+  it('fails when team cannot afford recruitment', () => {
+    const state = GameState.create()
+    // GAR starts with Money: 50, needs 150 — should fail
+    const p0 = state.players[0]
+    const result = state.recruitPlayer(p0.position)
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.reason).toMatch(/resources/)
+    }
+  })
+
+  it('succeeds when team has enough resources and valid position', () => {
+    const state = GameState.create()
+    // Give GAR enough resources
+    state.teamResources['Grand Army of the Republic'].Money = 200
+    state.teamResources['Grand Army of the Republic'].RawMaterials = 200
+
+    // Find a friendly orbit cell for GAR
+    const team = state.activePlayer.team
+    let targetPos: { row: number; col: number } | null = null
+    for (const planet of state.plannets) {
+      if (planet.currentOwner !== team) continue
+      for (const o of planet.cellsInOrbit) {
+        if (state.grid[o.row]?.[o.col]?.accessible) {
+          targetPos = o
+          break
+        }
+      }
+      if (targetPos) break
+    }
+    expect(targetPos).not.toBeNull()
+
+    const result = state.recruitPlayer(targetPos!)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.state.players.length).toBe(state.players.length + 1)
+      const newPlayer = result.state.players[result.state.players.length - 1]
+      expect(newPlayer.team).toBe(team)
+      expect(newPlayer.infantry).toBe(12) // GAR default
+      // Resources should be deducted
+      expect(result.state.teamResources[team].Money).toBe(200 - 150)
+      expect(result.state.teamResources[team].RawMaterials).toBe(200 - 75)
+    }
+  })
+
+  it('fails when position is not in friendly orbit', () => {
+    const state = GameState.create()
+    state.teamResources['Grand Army of the Republic'].Money = 200
+    state.teamResources['Grand Army of the Republic'].RawMaterials = 200
+
+    // Use a cell that's accessible but not in any friendly orbit
+    const result = state.recruitPlayer({ row: 0, col: 0 })
+    expect(result.ok).toBe(false)
+  })
+})

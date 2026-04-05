@@ -27,6 +27,7 @@ const SHORT_TEAM: Record<string, string> = {
 }
 
 let state = GameState.create()
+let placingPlayer = false
 
 const gridContainer  = document.getElementById('grid-container')  as HTMLDivElement
 const colLabelsEl    = document.getElementById('col-labels')     as HTMLDivElement
@@ -78,6 +79,20 @@ const renderGrid = (s: GameState): void => {
     }
   }
 
+  // Build set of valid placement cells during placement mode
+  const placementCells = new Set<string>()
+  if (placingPlayer) {
+    const team = s.activePlayer.team
+    for (const planet of s.plannets) {
+      if (planet.currentOwner !== team) continue
+      for (const o of planet.cellsInOrbit) {
+        if (s.grid[o.row]?.[o.col]?.accessible) {
+          placementCells.add(`${o.row},${o.col}`)
+        }
+      }
+    }
+  }
+
   const playersByCell = new Map<string, typeof s.players>()
   for (const player of s.players) {
     const key = `${player.position.row},${player.position.col}`
@@ -124,6 +139,10 @@ const renderGrid = (s: GameState): void => {
         el.classList.add('orbit-owned', `orbit-${orbitTeam}`)
       }
 
+      if (placementCells.has(cellKey)) {
+        el.classList.add('placement-target')
+      }
+
       gridContainer.appendChild(el)
     }
   }
@@ -138,11 +157,20 @@ const renderGrid = (s: GameState): void => {
     gridContainer.appendChild(label)
   }
 
-  statusEl.textContent = s.lastMessage
-  statusEl.className   = s.status === 'error' ? 'error' : ''
+  if (!placingPlayer) {
+    statusEl.textContent = s.lastMessage
+    statusEl.className   = s.status === 'error' ? 'error' : ''
+  }
   const ap = s.activePlayer
   const fuel = s.teamFuel
   turnCounterEl.textContent = `Turn ${s.turn} · ${ap.name} · ${posLabel(ap.position)} · Fuel: ${fuel}`
+
+  // Update create player button text
+  const cpBtn = document.getElementById('create-player-btn') as HTMLButtonElement | null
+  if (cpBtn) {
+    cpBtn.textContent = placingPlayer ? 'Cancel Placement' : 'Create Player'
+    cpBtn.style.display = s.status === 'playing' ? '' : 'none'
+  }
 
   renderTeamStats(s)
   renderBattle(s)
@@ -309,6 +337,19 @@ gridContainer.addEventListener('click', (e: MouseEvent) => {
     col: Number(cell.dataset['col']),
   }
 
+  if (placingPlayer) {
+    const result = state.recruitPlayer(targetPos)
+    if (result.ok) {
+      state = result.state
+      placingPlayer = false
+      renderGrid(state)
+    } else {
+      statusEl.textContent = result.reason
+      statusEl.className = 'error'
+    }
+    return
+  }
+
   const result = state.applyMove(targetPos)
   if (result.ok) {
     state = result.state
@@ -322,10 +363,34 @@ gridContainer.addEventListener('click', (e: MouseEvent) => {
 const endMoveBtn = document.getElementById('end-move-btn') as HTMLButtonElement
 endMoveBtn.addEventListener('click', () => {
   if (state.status === 'battling') return
+  placingPlayer = false
 
   state = state.endPlayerTurn()
   renderGrid(state)
   exportTurnCSV(posLabel(state.activePlayer.position), state.turn)
+})
+
+const createPlayerBtn = document.getElementById('create-player-btn') as HTMLButtonElement
+createPlayerBtn.addEventListener('click', () => {
+  if (state.status === 'battling') return
+
+  if (placingPlayer) {
+    // Cancel placement
+    placingPlayer = false
+    renderGrid(state)
+    return
+  }
+
+  if (!state.canRecruit) {
+    statusEl.textContent = 'Not enough resources to recruit a new unit'
+    statusEl.className = 'error'
+    return
+  }
+
+  placingPlayer = true
+  statusEl.textContent = 'Click a friendly orbit cell to place new unit'
+  statusEl.className = ''
+  renderGrid(state)
 })
 
 renderLabels()

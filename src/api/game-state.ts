@@ -135,6 +135,16 @@ const applyCasualties = (players: Player[], casualties: PlayerBattleCasualty[]):
   return updated
 }
 
+const RECRUIT_COST: Record<string, { Money: number; RawMaterials: number }> = {
+  'Grand Army of the Republic': { Money: 150, RawMaterials: 75 },
+  'Confederacy of Independent Systems': { Money: 75, RawMaterials: 150 },
+}
+
+const TEAM_UNIT_PREFIX: Record<string, string> = {
+  'Grand Army of the Republic': 'Clone Trooper',
+  'Confederacy of Independent Systems': 'Battle Droid',
+}
+
 const STARTING_PLAYERS: { name: string; team: TeamName; position: Position }[] = [
   { name: 'Clone Trooper 1', team: 'Grand Army of the Republic', position: { row: 31, col: 11 } },
   { name: 'Clone Trooper 2', team: 'Grand Army of the Republic', position: { row: 40, col: 18 } },
@@ -190,6 +200,58 @@ export class GameState {
 
   get currentBattle(): Battle | null {
     return this.pendingBattles[0] ?? null
+  }
+
+  get canRecruit(): boolean {
+    const team = this.activePlayer.team
+    const cost = RECRUIT_COST[team]
+    const res = this.teamResources[team]
+    if (!cost || !res) return false
+    return res.Money >= cost.Money && res.RawMaterials >= cost.RawMaterials
+  }
+
+  /** Create a new player for the active team at the given position. */
+  recruitPlayer(position: Position): MoveResult {
+    const team = this.activePlayer.team
+    const cost = RECRUIT_COST[team]
+    const res = this.teamResources[team]
+
+    if (!cost || !res || res.Money < cost.Money || res.RawMaterials < cost.RawMaterials) {
+      return { ok: false, reason: 'Not enough resources to recruit a new unit' }
+    }
+
+    // Must be an accessible cell
+    const cell = this.grid[position.row]?.[position.col]
+    if (!cell?.accessible) {
+      return { ok: false, reason: 'That cell is not accessible' }
+    }
+
+    // Must be in orbit of a planet owned by the team
+    const inFriendlyOrbit = this.plannets.some(
+      p => p.currentOwner === team &&
+        p.cellsInOrbit.some(o => o.row === position.row && o.col === position.col)
+    )
+    if (!inFriendlyOrbit) {
+      return { ok: false, reason: 'New unit must be placed in orbit of a planet you control' }
+    }
+
+    const nextId = Math.max(...this.players.map(p => p.id)) + 1
+    const prefix = TEAM_UNIT_PREFIX[team] ?? 'Unit'
+    const teamCount = this.players.filter(p => p.team === team).length + 1
+    const name = `${prefix} ${teamCount}`
+
+    const newPlayer = new Player(nextId, name, team, position)
+    const newPlayers = [...clonePlayers(this.players), newPlayer]
+
+    const newTeamResources = cloneTeamResources(this.teamResources)
+    newTeamResources[team].Money -= cost.Money
+    newTeamResources[team].RawMaterials -= cost.RawMaterials
+
+    const msg = `${name} recruited at ${posLabel(position)}`
+    return {
+      ok: true,
+      state: new GameState(this.grid, newPlayers, this.plannets, this.activePlayerIndex, this.turn, 'playing', msg, newTeamResources),
+    }
   }
 
   static create(): GameState {

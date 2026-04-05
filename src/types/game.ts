@@ -84,7 +84,7 @@ const PLANNET_NAMES = [
   'Kenari', 'Serenno', 'AjanKloss', 'Yavin4', 'Felucia',
   'Mandalore', 'LolaSayu', 'Csilla', 'Kijimi', 'Bracca',
   'CarrickStation', 'Kashyyk', 'Coruscant', 'Onderon', 'NalHutta',
-  'Kessel', 'Alderaan', 'Plannet_18', 'Plannet_19', 'Bothawui',
+  'Kessel', 'Alderaan', 'Plannet_18', 'Corellia', 'Bothawui',
   'HrakertStation', 'Fondor', 'Scarif', 'Jakku', 'Takodana',
   'YagDhul', 'RichiSation', 'Kammino', 'Kafrene', 'Endor',
   'Tatooine', 'Naboo', 'Geonosis', 'Bespin', 'DQar',
