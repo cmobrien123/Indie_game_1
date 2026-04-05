@@ -15,6 +15,24 @@ export type Grid = Cell[][]
 
 export type TeamName = 'Grand Army of the Republic' | 'Confederacy of Independent Systems'
 
+export interface Battle {
+  planetIndex: number
+  planetName: string
+  attackingTeam: TeamName
+  defendingTeam: TeamName | null
+  attackerPlayerIds: number[]
+  defenderPlayerIds: number[]
+  attackerDiceSides: number
+  defenderDiceSides: number
+  attackerRoll: number | null
+  defenderRoll: number | null
+}
+
+export interface BattleResult {
+  battle: Battle
+  winner: TeamName
+}
+
 export class Player {
   readonly id: number
   readonly name: string

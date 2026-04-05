@@ -242,6 +242,119 @@
       border-top: 1px solid #0f3460;
       margin: 6px 0;
     }
+
+    /* ── Battle overlay ──────────────────────────── */
+
+    #battle-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #battle-modal {
+      background: #16213e;
+      border: 2px solid #e74c3c;
+      border-radius: 12px;
+      padding: 24px 32px;
+      min-width: 420px;
+      max-width: 520px;
+      color: #e0e0e0;
+      text-align: center;
+    }
+
+    #battle-modal h2 {
+      font-size: 1.1rem;
+      color: #e74c3c;
+      margin-bottom: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    #battle-modal .battle-planet {
+      font-size: 0.9rem;
+      color: #f1c40f;
+      margin-bottom: 16px;
+    }
+
+    .battle-sides {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .battle-side {
+      flex: 1;
+      background: #1a1a2e;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .battle-side h3 {
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+    }
+
+    .battle-side.attacker h3 { color: #e67e22; }
+    .battle-side.defender h3 { color: #3498db; }
+
+    .battle-side .side-info {
+      font-size: 0.7rem;
+      color: #999;
+      margin-bottom: 8px;
+    }
+
+    .battle-side .dice-result {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f1c40f;
+      min-height: 2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .roll-btn {
+      padding: 6px 18px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+      background: #e74c3c;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .roll-btn:hover { background: #c0392b; }
+    .roll-btn:disabled { background: #555; cursor: default; }
+
+    #battle-continue-btn {
+      margin-top: 12px;
+      padding: 8px 24px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      background: #27ae60;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #battle-continue-btn:hover { background: #1e8449; }
+
+    .battle-outcome {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 10px;
+      min-height: 1.4em;
+    }
+
+    .battle-outcome.win { color: #2ecc71; }
+    .battle-outcome.tie { color: #f39c12; }
   </style>
 </head>
 <body>
@@ -262,6 +375,9 @@
   <p id="turn-counter"></p>
   <button id="end-move-btn">End Move</button>
   <div id="team-stats"></div>
+  <div id="battle-overlay" style="display:none;">
+    <div id="battle-modal"></div>
+  </div>
   <script src="dist/bundle.js"></script>
 </body>
 </html>

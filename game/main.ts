@@ -21,14 +21,21 @@ const TEAM_CLASS: Record<string, string> = {
   'Confederacy of Independent Systems': 'team-cis',
 }
 
+const SHORT_TEAM: Record<string, string> = {
+  'Grand Army of the Republic': 'Republic',
+  'Confederacy of Independent Systems': 'Separatists',
+}
+
 let state = GameState.create()
 
-const gridContainer = document.getElementById('grid-container') as HTMLDivElement
-const colLabelsEl   = document.getElementById('col-labels')    as HTMLDivElement
-const rowLabelsEl   = document.getElementById('row-labels')    as HTMLDivElement
-const statusEl      = document.getElementById('status')        as HTMLParagraphElement
-const turnCounterEl = document.getElementById('turn-counter')  as HTMLParagraphElement
-const teamStatsEl   = document.getElementById('team-stats')    as HTMLDivElement
+const gridContainer  = document.getElementById('grid-container')  as HTMLDivElement
+const colLabelsEl    = document.getElementById('col-labels')     as HTMLDivElement
+const rowLabelsEl    = document.getElementById('row-labels')     as HTMLDivElement
+const statusEl       = document.getElementById('status')         as HTMLParagraphElement
+const turnCounterEl  = document.getElementById('turn-counter')   as HTMLParagraphElement
+const teamStatsEl    = document.getElementById('team-stats')     as HTMLDivElement
+const battleOverlay  = document.getElementById('battle-overlay')  as HTMLDivElement
+const battleModal    = document.getElementById('battle-modal')    as HTMLDivElement
 
 const renderLabels = (): void => {
   colLabelsEl.innerHTML = ''
@@ -57,13 +64,11 @@ const renderGrid = (s: GameState): void => {
     getAdjacentCells(s.grid, active.position).map(c => `${c.position.row},${c.position.col}`)
   )
 
-  // Build a map of core position -> planet name
   const planetNameByCell = new Map<string, string>()
   for (const planet of s.plannets) {
     planetNameByCell.set(`${planet.cellLocation.row},${planet.cellLocation.col}`, planet.name)
   }
 
-  // Build a map of orbit cell -> owning team (for coloring)
   const orbitOwnerByCell = new Map<string, string>()
   for (const planet of s.plannets) {
     if (!planet.currentOwner) continue
@@ -73,7 +78,6 @@ const renderGrid = (s: GameState): void => {
     }
   }
 
-  // Build a map of cell -> players on that cell
   const playersByCell = new Map<string, typeof s.players>()
   for (const player of s.players) {
     const key = `${player.position.row},${player.position.col}`
@@ -124,7 +128,6 @@ const renderGrid = (s: GameState): void => {
     }
   }
 
-  // Render planet name labels outside cells (clip-path would hide children)
   for (const planet of s.plannets) {
     const { row, col } = planet.cellLocation
     const label = document.createElement('span')
@@ -142,6 +145,7 @@ const renderGrid = (s: GameState): void => {
   turnCounterEl.textContent = `Turn ${s.turn} · ${ap.name} · ${posLabel(ap.position)} · Fuel: ${fuel}`
 
   renderTeamStats(s)
+  renderBattle(s)
 }
 
 const RESOURCE_KEYS = ['Money', 'RawMaterials', 'Fuel', 'ForceSensitivity']
@@ -159,7 +163,6 @@ const renderTeamStats = (s: GameState): void => {
     const ownedPlannets = s.plannets.filter(p => p.currentOwner === team.name)
     const plannetCount = ownedPlannets.length
 
-    // Per-turn income from owned planets
     const income: Record<string, number> = {}
     for (const key of RESOURCE_KEYS) income[key] = 0
     for (const planet of ownedPlannets) {
@@ -168,7 +171,6 @@ const renderTeamStats = (s: GameState): void => {
       }
     }
 
-    // Accumulated totals
     const accumulated = s.teamResources[team.name] ?? {}
 
     const panel = document.createElement('div')
@@ -187,7 +189,120 @@ const renderTeamStats = (s: GameState): void => {
   }
 }
 
+// ── Battle UI ────────────────────────────────────────
+
+const RESULT_DELAY_MS = 4000
+
+const renderBattle = (s: GameState): void => {
+  // Show result screen if a battle was just resolved
+  if (s.lastBattleResult) {
+    battleOverlay.style.display = 'flex'
+    const r = s.lastBattleResult
+    const b = r.battle
+    const attackerLabel = SHORT_TEAM[b.attackingTeam] ?? b.attackingTeam
+    const defenderLabel = b.defendingTeam ? (SHORT_TEAM[b.defendingTeam] ?? b.defendingTeam) : 'Unowned'
+    const winnerLabel = SHORT_TEAM[r.winner] ?? r.winner
+
+    battleModal.innerHTML = `
+      <h2>Battle Result</h2>
+      <div class="battle-planet">${b.planetName}</div>
+      <div class="battle-sides">
+        <div class="battle-side attacker">
+          <h3>${attackerLabel} (Attacker)</h3>
+          <div class="side-info">Dice: d${b.attackerDiceSides}</div>
+          <div class="dice-result">${b.attackerRoll}</div>
+        </div>
+        <div class="battle-side defender">
+          <h3>${defenderLabel} (Defender${b.defendingTeam ? ' +8' : ''})</h3>
+          <div class="side-info">Dice: d${b.defenderDiceSides}</div>
+          <div class="dice-result">${b.defenderRoll}</div>
+        </div>
+      </div>
+      <div style="font-size:0.85rem;color:#ccc;margin:8px 0;">${attackerLabel}: ${b.attackerRoll} vs ${defenderLabel}: ${b.defenderRoll}</div>
+      <div class="battle-outcome win">${winnerLabel} keeps ${b.planetName}!</div>
+    `
+    return
+  }
+
+  if (s.status !== 'battling' || !s.currentBattle) {
+    battleOverlay.style.display = 'none'
+    return
+  }
+
+  battleOverlay.style.display = 'flex'
+  const b = s.currentBattle
+
+  const attackerNames = b.attackerPlayerIds.map(id => s.players.find(p => p.id === id)?.name ?? '?').join(', ')
+  const defenderNames = b.defenderPlayerIds.map(id => s.players.find(p => p.id === id)?.name ?? '?').join(', ')
+  const attackerLabel = SHORT_TEAM[b.attackingTeam] ?? b.attackingTeam
+  const defenderLabel = b.defendingTeam ? (SHORT_TEAM[b.defendingTeam] ?? b.defendingTeam) : 'Unowned'
+
+  let scoreHtml = ''
+  if (b.attackerRoll !== null || b.defenderRoll !== null) {
+    scoreHtml = `<div style="font-size:0.85rem;color:#ccc;margin:8px 0;">${attackerLabel}: ${b.attackerRoll ?? '—'} vs ${defenderLabel}: ${b.defenderRoll ?? '—'}</div>`
+  }
+
+  let outcomeHtml = ''
+  if (b.attackerRoll !== null && b.defenderRoll !== null && b.attackerRoll === b.defenderRoll) {
+    outcomeHtml = `<div class="battle-outcome tie">Tie! Roll again.</div>`
+  }
+
+  battleModal.innerHTML = `
+    <h2>Battle!</h2>
+    <div class="battle-planet">${b.planetName}</div>
+    <div class="battle-sides">
+      <div class="battle-side attacker">
+        <h3>${attackerLabel} (Attacker)</h3>
+        <div class="side-info">${attackerNames}</div>
+        <div class="side-info">Dice: d${b.attackerDiceSides}</div>
+        <div class="dice-result">${b.attackerRoll !== null ? b.attackerRoll : ''}</div>
+        <button class="roll-btn" id="roll-attacker" ${b.attackerRoll !== null ? 'disabled' : ''}>${b.attackerRoll !== null ? 'Rolled' : 'Roll'}</button>
+      </div>
+      <div class="battle-side defender">
+        <h3>${defenderLabel} (Defender${b.defendingTeam ? ' +8' : ''})</h3>
+        <div class="side-info">${defenderNames || 'No units in orbit'}</div>
+        <div class="side-info">Dice: d${b.defenderDiceSides}</div>
+        <div class="dice-result">${b.defenderRoll !== null ? b.defenderRoll : ''}</div>
+        <button class="roll-btn" id="roll-defender" ${b.defenderRoll !== null ? 'disabled' : ''}>${b.defenderRoll !== null ? 'Rolled' : 'Roll'}</button>
+      </div>
+    </div>
+    ${scoreHtml}
+    ${outcomeHtml}
+  `
+
+  document.getElementById('roll-attacker')?.addEventListener('click', () => {
+    state = state.applyBattleRoll(b.attackingTeam)
+    if (state.lastBattleResult) {
+      // Battle resolved — show result, then auto-dismiss after delay
+      renderGrid(state)
+      setTimeout(() => {
+        state = state.dismissBattleResult()
+        renderGrid(state)
+      }, RESULT_DELAY_MS)
+    } else {
+      renderGrid(state)
+    }
+  })
+
+  document.getElementById('roll-defender')?.addEventListener('click', () => {
+    state = state.applyBattleRoll(b.defendingTeam ?? b.attackingTeam)
+    if (state.lastBattleResult) {
+      renderGrid(state)
+      setTimeout(() => {
+        state = state.dismissBattleResult()
+        renderGrid(state)
+      }, RESULT_DELAY_MS)
+    } else {
+      renderGrid(state)
+    }
+  })
+}
+
+// ── Event handlers ───────────────────────────────────
+
 gridContainer.addEventListener('click', (e: MouseEvent) => {
+  if (state.status === 'battling') return
+
   const target = e.target as HTMLElement
   const cell = target.closest('.cell') as HTMLElement | null
   if (!cell) return
@@ -209,6 +324,8 @@ gridContainer.addEventListener('click', (e: MouseEvent) => {
 
 const endMoveBtn = document.getElementById('end-move-btn') as HTMLButtonElement
 endMoveBtn.addEventListener('click', () => {
+  if (state.status === 'battling') return
+
   state = state.endPlayerTurn()
   renderGrid(state)
   exportTurnCSV(posLabel(state.activePlayer.position), state.turn)

@@ -143,4 +143,44 @@ describe('GameState.applyMove', () => {
       }
     }
   })
+
+  it('does not change planet ownership on move', () => {
+    const state = GameState.create()
+    // Record all owners before
+    const ownersBefore = state.plannets.map(p => p.currentOwner)
+    const p0 = state.players[0]
+    const offsets = getHexNeighborOffsets(p0.position.row)
+    for (const off of offsets) {
+      const target = { row: p0.position.row + off.row, col: p0.position.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        const result = state.applyMove(target)
+        if (result.ok) {
+          const ownersAfter = result.state.plannets.map(p => p.currentOwner)
+          expect(ownersAfter).toEqual(ownersBefore)
+        }
+        break
+      }
+    }
+  })
+})
+
+describe('GameState.endPlayerTurn — battle detection', () => {
+  it('stays playing when no enemies in orbit at end of full turn', () => {
+    let state = GameState.create()
+    // End all 6 player turns without moving
+    for (let i = 0; i < 6; i++) {
+      state = state.endPlayerTurn()
+    }
+    expect(state.status).toBe('playing')
+    expect(state.pendingBattles.length).toBe(0)
+  })
+})
+
+describe('GameState.applyBattleRoll', () => {
+  it('returns same state when not battling', () => {
+    const state = GameState.create()
+    const result = state.applyBattleRoll('Grand Army of the Republic')
+    expect(result).toBe(state)
+  })
 })
