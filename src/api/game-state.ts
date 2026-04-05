@@ -48,6 +48,7 @@ const clonePlayers = (players: Player[]): Player[] =>
   players.map(p => {
     const np = new Player(p.id, p.name, p.team, p.position)
     np.infantry = p.infantry
+    np.experience = p.experience
     return np
   })
 
@@ -124,12 +125,16 @@ const computeCasualties = (
 
 const applyCasualties = (players: Player[], casualties: PlayerBattleCasualty[]): Player[] => {
   const removedIds = new Set(casualties.filter(c => c.removed).map(c => c.playerId))
+  const involvedIds = new Set(casualties.map(c => c.playerId))
   const updated = players
     .filter(p => !removedIds.has(p.id))
     .map(p => {
       const np = new Player(p.id, p.name, p.team, p.position)
+      np.experience = p.experience
       const casualty = casualties.find(c => c.playerId === p.id)
       np.infantry = casualty ? casualty.infantryAfter : p.infantry
+      // +10 experience for battle participants
+      if (involvedIds.has(p.id)) np.experience += 10
       return np
     })
   return updated
@@ -349,26 +354,30 @@ export class GameState {
 
     const newTeamResources = cloneTeamResources(this.teamResources)
     const newPlannets = clonePlannets(this.plannets)
+    const newPlayers = clonePlayers(this.players)
 
     if (turnComplete) {
+      // All players gain +1 experience at end of turn
+      for (const p of newPlayers) p.experience += 1
+
       accumulateResources(newTeamResources, newPlannets)
 
       // Auto-claim unowned planets with only one team in orbit
-      autoClaimUnowned(this.players, newPlannets)
+      autoClaimUnowned(newPlayers, newPlannets)
 
       // Detect battles for contested planets
-      const battles = detectBattles(this.players, newPlannets)
+      const battles = detectBattles(newPlayers, newPlannets)
       if (battles.length > 0) {
         const nextTurn = this.turn + 1
         const msg = `Turn ${nextTurn} — ${battles.length} battle(s) to resolve!`
-        return new GameState(this.grid, this.players, newPlannets, nextPlayerIndex, nextTurn, 'battling', msg, newTeamResources, battles)
+        return new GameState(this.grid, newPlayers, newPlannets, nextPlayerIndex, nextTurn, 'battling', msg, newTeamResources, battles)
       }
     }
 
     const nextTurn = turnComplete ? this.turn + 1 : this.turn
-    const msg = GameState.buildMessage(this.grid, this.players[nextPlayerIndex], nextTurn, newPlannets)
+    const msg = GameState.buildMessage(this.grid, newPlayers[nextPlayerIndex], nextTurn, newPlannets)
 
-    return new GameState(this.grid, this.players, newPlannets, nextPlayerIndex, nextTurn, 'playing', msg, newTeamResources)
+    return new GameState(this.grid, newPlayers, newPlannets, nextPlayerIndex, nextTurn, 'playing', msg, newTeamResources)
   }
 
   /** Record a dice roll for the given team in the current battle. */

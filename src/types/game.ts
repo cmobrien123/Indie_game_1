@@ -58,6 +58,7 @@ export class Player {
   readonly team: TeamName
   position: Position
   infantry: number
+  experience: number
 
   constructor(id: number, name: string, team: TeamName, position: Position) {
     this.id = id
@@ -65,6 +66,13 @@ export class Player {
     this.team = team
     this.position = { ...position }
     this.infantry = team === 'Grand Army of the Republic' ? 12 : 16
+    this.experience = 0
+  }
+
+  get experienceLevel(): string {
+    if (this.experience >= 150) return 'EliteUnit'
+    if (this.experience >= 25) return 'Vet'
+    return 'Rookie'
   }
 
   moveTo(target: Position): void {

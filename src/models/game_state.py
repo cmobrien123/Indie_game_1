@@ -119,13 +119,18 @@ def _compute_casualties(
 
 def _apply_casualties(players: list[Player], casualties: list[PlayerBattleCasualty]) -> list[Player]:
     removed_ids = {c.player_id for c in casualties if c.removed}
+    involved_ids = {c.player_id for c in casualties}
     result = []
     for p in players:
         if p.id in removed_ids:
             continue
         np = Player(p.id, p.name, p.team, p.position)
+        np.experience = p.experience
         c = next((cas for cas in casualties if cas.player_id == p.id), None)
         np.infantry = c.infantry_after if c else p.infantry
+        # +10 experience for battle participants
+        if p.id in involved_ids:
+            np.experience += 10
         result.append(np)
     return result
 
@@ -262,6 +267,7 @@ def _clone_players(players: list[Player]) -> list[Player]:
     for p in players:
         np = Player(p.id, p.name, p.team, p.position)
         np.infantry = p.infantry
+        np.experience = p.experience
         result.append(np)
     return result
 
@@ -438,24 +444,29 @@ class GameState:
 
         new_team_resources = {t: dict(r) for t, r in self.team_resources.items()}
         new_plannets = _clone_plannets(self.plannets)
+        new_players = _clone_players(self.players)
 
         if turn_complete:
+            # All players gain +1 experience at end of turn
+            for p in new_players:
+                p.experience += 1
+
             for planet in new_plannets:
                 if planet.current_owner and planet.current_owner in new_team_resources:
                     for key in self.RESOURCE_KEYS:
                         new_team_resources[planet.current_owner][key] += planet.resource_stats.get(key, 0)
 
-            _auto_claim_unowned(self.players, new_plannets)
+            _auto_claim_unowned(new_players, new_plannets)
 
-            battles = _detect_battles(self.players, new_plannets)
+            battles = _detect_battles(new_players, new_plannets)
             if battles:
                 next_turn = self.turn + 1
                 msg = f'Turn {next_turn} — {len(battles)} battle(s) to resolve!'
-                return GameState(self.grid, self.players, new_plannets, next_player_index, next_turn, 'battling', msg, new_team_resources, battles)
+                return GameState(self.grid, new_players, new_plannets, next_player_index, next_turn, 'battling', msg, new_team_resources, battles)
 
         next_turn = self.turn + 1 if turn_complete else self.turn
-        msg = GameState._build_message(self.grid, self.players[next_player_index], next_turn, new_plannets)
-        return GameState(self.grid, self.players, new_plannets, next_player_index, next_turn, 'playing', msg, new_team_resources)
+        msg = GameState._build_message(self.grid, new_players[next_player_index], next_turn, new_plannets)
+        return GameState(self.grid, new_players, new_plannets, next_player_index, next_turn, 'playing', msg, new_team_resources)
 
     def apply_battle_roll(self, team: str) -> GameState:
         battle = self.current_battle

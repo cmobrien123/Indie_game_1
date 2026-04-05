@@ -28,6 +28,15 @@ class Player:
         self.team = team
         self.position = Position(position.row, position.col)
         self.infantry = GAR_STARTING_INFANTRY if team == 'Grand Army of the Republic' else CIS_STARTING_INFANTRY
+        self.experience = 0
+
+    @property
+    def experience_level(self) -> str:
+        if self.experience >= 150:
+            return 'EliteUnit'
+        if self.experience >= 25:
+            return 'Vet'
+        return 'Rookie'
 
     def move_to(self, target: Position) -> None:
         self.position = Position(target.row, target.col)

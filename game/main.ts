@@ -157,6 +157,17 @@ const renderGrid = (s: GameState): void => {
     gridContainer.appendChild(label)
   }
 
+  // Render player name + experience level labels above player positions
+  for (const player of s.players) {
+    const { row, col } = player.position
+    const label = document.createElement('span')
+    label.className = 'player-label'
+    label.innerHTML = `${player.name}<br>(${player.experienceLevel})`
+    label.style.left = `${col * HEX_W + (row % 2 === 1 ? ODD_OFFSET : 0) + HEX_W / 2}px`
+    label.style.top  = `${row * HEX_V_STEP - 18}px`
+    gridContainer.appendChild(label)
+  }
+
   if (!placingPlayer) {
     statusEl.textContent = s.lastMessage
     statusEl.className   = s.status === 'error' ? 'error' : ''
