@@ -358,7 +358,15 @@ export class GameState {
 
     if (turnComplete) {
       // All players gain +1 experience at end of turn
-      for (const p of newPlayers) p.experience += 1
+      // Players in friendly orbit gain +1 infantry
+      for (const p of newPlayers) {
+        p.experience += 1
+        const inFriendlyOrbit = newPlannets.some(
+          pl => pl.currentOwner === p.team &&
+            pl.cellsInOrbit.some(o => o.row === p.position.row && o.col === p.position.col)
+        )
+        if (inFriendlyOrbit) p.infantry += 1
+      }
 
       accumulateResources(newTeamResources, newPlannets)
 

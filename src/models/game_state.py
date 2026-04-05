@@ -448,8 +448,17 @@ class GameState:
 
         if turn_complete:
             # All players gain +1 experience at end of turn
+            # Players in friendly orbit gain +1 infantry
             for p in new_players:
                 p.experience += 1
+                in_friendly_orbit = any(
+                    pl.current_owner == p.team
+                    and any(o.row == p.position.row and o.col == p.position.col
+                            for o in pl.cells_in_orbit)
+                    for pl in new_plannets
+                )
+                if in_friendly_orbit:
+                    p.infantry += 1
 
             for planet in new_plannets:
                 if planet.current_owner and planet.current_owner in new_team_resources:
