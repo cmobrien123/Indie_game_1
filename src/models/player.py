@@ -19,6 +19,7 @@ TeamName = str  # 'Grand Army of the Republic' | 'Confederacy of Independent Sys
 
 GAR_STARTING_INFANTRY = 12
 CIS_STARTING_INFANTRY = 16
+MAX_INFANTRY = 30
 
 
 class Player:
@@ -27,8 +28,16 @@ class Player:
         self.name = name
         self.team = team
         self.position = Position(position.row, position.col)
-        self.infantry = GAR_STARTING_INFANTRY if team == 'Grand Army of the Republic' else CIS_STARTING_INFANTRY
+        self._infantry = GAR_STARTING_INFANTRY if team == 'Grand Army of the Republic' else CIS_STARTING_INFANTRY
         self.experience = 0
+
+    @property
+    def infantry(self) -> int:
+        return self._infantry
+
+    @infantry.setter
+    def infantry(self, value: int) -> None:
+        self._infantry = min(value, MAX_INFANTRY)
 
     @property
     def experience_level(self) -> str:

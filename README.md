@@ -63,6 +63,7 @@ npm run typecheck # Type check browser and server code
 
 ## TODO
 
-- [ ] Create a database to track the current state of what the map looks like / state of the stats of players
-- [ ] Create multiple players, each getting one move per turn
-- [ ] Create rules where each player gets points for doing something
+- [ ] Create inital battle framework
+- [ ] Create process for tagging (ex commitizen)
+- [ ] Create UI needed items
+- [ ] Create beutification list (ex. planets, background, player icons that change with experience, ability to name players)

@@ -52,12 +52,14 @@ export interface BattleResult {
   casualties: PlayerBattleCasualty[]
 }
 
+const MAX_INFANTRY = 30
+
 export class Player {
   readonly id: number
   readonly name: string
   readonly team: TeamName
   position: Position
-  infantry: number
+  private _infantry: number
   experience: number
 
   constructor(id: number, name: string, team: TeamName, position: Position) {
@@ -65,8 +67,16 @@ export class Player {
     this.name = name
     this.team = team
     this.position = { ...position }
-    this.infantry = team === 'Grand Army of the Republic' ? 12 : 16
+    this._infantry = team === 'Grand Army of the Republic' ? 12 : 16
     this.experience = 0
+  }
+
+  get infantry(): number {
+    return this._infantry
+  }
+
+  set infantry(value: number) {
+    this._infantry = Math.min(value, MAX_INFANTRY)
   }
 
   get experienceLevel(): string {
