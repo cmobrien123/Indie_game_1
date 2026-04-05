@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hex Grid Game</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      letter-spacing: 0.05em;
+      color: #a8d8ea;
+    }
+
+    #status {
+      font-size: 0.95rem;
+      color: #ccc;
+      min-height: 1.4em;
+    }
+
+    #status.error { color: #ff6b6b; }
+
+    /* ── Board layout ─────────────────────────────── */
+
+    #board {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      background: #16213e;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #0f3460;
+    }
+
+    /* Column labels row */
+    #col-label-row {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 6px;
+    }
+
+    #row-label-spacer {
+      width: 30px;
+      flex-shrink: 0;
+    }
+
+    #col-labels {
+      display: flex;
+    }
+
+    .col-label {
+      width: 30px;
+      text-align: center;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #a8d8ea;
+      user-select: none;
+    }
+
+    /* Grid + row-labels row */
+    #grid-row {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    #row-labels {
+      width: 30px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .row-label {
+      position: absolute;
+      right: 6px;
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: #a8d8ea;
+      transform: translateY(-50%);
+      user-select: none;
+    }
+
+    /* Hex grid container — cells are absolutely positioned inside */
+    #grid-container {
+      position: relative;
+    }
+
+    /* ── Hex cells ────────────────────────────────── */
+
+    /* Pointy-top hexagon: width=30px, height=34px */
+    .cell {
+      position: absolute;
+      width: 30px;
+      height: 34px;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      background: #0f3460;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: filter 0.1s;
+    }
+
+    .cell:hover { filter: brightness(1.35); }
+
+    .cell.occupied {
+      background: #e94560;
+      cursor: default;
+    }
+
+    .cell.occupied::after {
+      content: '▲';
+      font-size: 11px;
+      color: #fff;
+    }
+
+    .cell.adjacent {
+      background: #1e6091;
+      outline: none;
+      filter: brightness(1.15);
+    }
+
+    .cell.adjacent:hover { filter: brightness(1.4); }
+
+    /* Cell value colors */
+    .cell.cell-0 { background: #555; cursor: not-allowed; }
+    .cell.cell-0:hover { filter: none; }
+    .cell.cell-1 { background: #e67e22; }
+    .cell.cell-2 { background: #3498db; }
+    .cell.cell-3 { background: #e74c3c; cursor: not-allowed; }
+    .cell.cell-3:hover { filter: none; }
+
+    #turn-counter {
+      font-size: 0.85rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hex Grid Game</h1>
+  <p id="status">Loading...</p>
+
+  <div id="board">
+    <div id="col-label-row">
+      <div id="row-label-spacer"></div>
+      <div id="col-labels"></div>
+    </div>
+    <div id="grid-row">
+      <div id="row-labels"></div>
+      <div id="grid-container"></div>
+    </div>
+  </div>
+
+  <p id="turn-counter"></p>
+  <script src="dist/bundle.js"></script>
+</body>
+</html>

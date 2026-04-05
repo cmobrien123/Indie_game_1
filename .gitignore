@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Claude Code config
+.claude/
+CLAUDE.md
+
+# Build output
+dist/
+
+# Environment variables / secrets
+.env
+.env.*
+.envrc
+.envrc.private
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage / test output
+coverage/

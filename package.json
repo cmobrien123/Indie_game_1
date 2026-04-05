@@ -1,0 +1,22 @@
+{
+  "name": "claude-tutorial-game",
+  "version": "1.0.0",
+  "description": "Turn-based grid game built with TypeScript",
+  "scripts": {
+    "build": "esbuild game/main.ts --bundle --outfile=dist/bundle.js --loader:.csv=text",
+    "dev": "esbuild game/main.ts --bundle --outfile=dist/bundle.js --watch --loader:.csv=text",
+    "server": "tsx server/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p server/tsconfig.json",
+    "lint": "eslint 'src/**/*.ts' 'game/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.20.0",
+    "express": "^4.18.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}
