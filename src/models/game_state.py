@@ -44,6 +44,82 @@ class Battle:
         self.defender_roll = defender_roll
 
 
+class PlayerBattleCasualty:
+    def __init__(self, player_id: int, player_name: str, outcome: str,
+                 infantry_before: int, infantry_after: int, removed: bool) -> None:
+        self.player_id = player_id
+        self.player_name = player_name
+        self.outcome = outcome
+        self.infantry_before = infantry_before
+        self.infantry_after = infantry_after
+        self.removed = removed
+
+
+class BattleResultData:
+    def __init__(self, battle: Battle, winner: str, margin: int,
+                 casualties: list[PlayerBattleCasualty]) -> None:
+        self.battle = battle
+        self.winner = winner
+        self.margin = margin
+        self.casualties = casualties
+
+
+def _compute_casualties(
+    players: list[Player],
+    winner_ids: list[int],
+    loser_ids: list[int],
+    margin: int,
+) -> list[PlayerBattleCasualty]:
+    casualties: list[PlayerBattleCasualty] = []
+
+    # Winners
+    if margin > 10:
+        win_outcome, win_reduction = 'Low Cost Win', 0.0
+    elif margin >= 5:
+        win_outcome, win_reduction = 'Medium Cost Win', 0.25
+    else:
+        win_outcome, win_reduction = 'High Cost Win', 0.50
+
+    for pid in winner_ids:
+        p = next((pl for pl in players if pl.id == pid), None)
+        if not p:
+            continue
+        before = p.infantry
+        after = round(before * (1 - win_reduction))
+        casualties.append(PlayerBattleCasualty(pid, p.name, win_outcome, before, after, False))
+
+    # Losers
+    if margin > 10:
+        lose_outcome, lose_reduction, removed = 'Major Defeat', 1.0, True
+    elif margin >= 6:
+        lose_outcome, lose_reduction, removed = 'Modest Defeat', 0.66, False
+    else:
+        lose_outcome, lose_reduction, removed = 'Mild Defeat', 0.33, False
+
+    for pid in loser_ids:
+        p = next((pl for pl in players if pl.id == pid), None)
+        if not p:
+            continue
+        before = p.infantry
+        after = 0 if removed else round(before * (1 - lose_reduction))
+        casualties.append(PlayerBattleCasualty(pid, p.name, lose_outcome, before, after, removed))
+
+    return casualties
+
+
+def _apply_casualties(players: list[Player], casualties: list[PlayerBattleCasualty]) -> list[Player]:
+    removed_ids = {c.player_id for c in casualties if c.removed}
+    result = []
+    for p in players:
+        if p.id in removed_ids:
+            continue
+        np = Player(p.id, p.name, p.team, p.position)
+        c = next((cas for cas in casualties if cas.player_id == p.id), None)
+        np.infantry = c.infantry_after if c else p.infantry
+        result.append(np)
+    return result
+
+
 class MoveResult:
     """Result of a move attempt. Check `ok` before accessing `state` or `reason`."""
 
@@ -201,6 +277,7 @@ class GameState:
         last_message: str,
         team_resources: Optional[dict[str, dict[str, int]]] = None,
         pending_battles: Optional[list[Battle]] = None,
+        last_battle_result: Optional[BattleResultData] = None,
     ) -> None:
         self.grid = grid
         self.players = players
@@ -214,6 +291,7 @@ class GameState:
             'Confederacy of Independent Systems': {'Money': 50, 'RawMaterials': 50, 'Fuel': 45, 'ForceSensitivity': 0},
         }
         self.pending_battles = pending_battles or []
+        self.last_battle_result = last_battle_result
 
     @property
     def active_player(self) -> Player:
@@ -358,18 +436,28 @@ class GameState:
 
             attacker_wins = new_attacker_roll > new_defender_roll
             winner = battle.attacking_team if attacker_wins else (battle.defending_team or battle.attacking_team)
+            margin = abs(new_attacker_roll - new_defender_roll)
 
+            winner_ids = battle.attacker_player_ids if attacker_wins else battle.defender_player_ids
+            loser_ids = battle.defender_player_ids if attacker_wins else battle.attacker_player_ids
+            casualties = _compute_casualties(self.players, winner_ids, loser_ids, margin)
+
+            new_players = _apply_casualties(self.players, casualties)
             new_plannets = _clone_plannets(self.plannets)
             new_plannets[battle.planet_index].current_owner = winner
 
             remaining = self.pending_battles[1:]
-            new_status = 'battling' if remaining else 'playing'
-            if remaining:
-                msg = f'{len(remaining)} battle(s) remaining.'
-            else:
-                msg = GameState._build_message(self.grid, self.players[self.active_player_index], self.turn, new_plannets)
+            updated_battle = Battle(
+                battle.planet_index, battle.planet_name,
+                battle.attacking_team, battle.defending_team,
+                battle.attacker_player_ids, battle.defender_player_ids,
+                battle.attacker_dice_sides, battle.defender_dice_sides,
+                new_attacker_roll, new_defender_roll,
+            )
+            result = BattleResultData(updated_battle, winner, margin, casualties)
 
-            return GameState(self.grid, self.players, new_plannets, self.active_player_index, self.turn, new_status, msg, self.team_resources, remaining)
+            return GameState(self.grid, new_players, new_plannets, self.active_player_index, self.turn, 'battling',
+                             'Battle resolved!', self.team_resources, remaining, result)
 
         # Only one team rolled
         new_battle = Battle(
@@ -382,6 +470,16 @@ class GameState:
         new_battles = [new_battle] + self.pending_battles[1:]
         msg = f'{team} rolled {roll}! Waiting for opponent...'
         return GameState(self.grid, self.players, self.plannets, self.active_player_index, self.turn, 'battling', msg, self.team_resources, new_battles)
+
+    def dismiss_battle_result(self) -> GameState:
+        if not self.last_battle_result:
+            return self
+        new_status = 'battling' if self.pending_battles else 'playing'
+        if self.pending_battles:
+            msg = f'{len(self.pending_battles)} battle(s) remaining.'
+        else:
+            msg = GameState._build_message(self.grid, self.players[self.active_player_index], self.turn, self.plannets)
+        return GameState(self.grid, self.players, self.plannets, self.active_player_index, self.turn, new_status, msg, self.team_resources, self.pending_battles, None)
 
     @staticmethod
     def _build_message(grid: list[list[dict]], player: Player, turn: int, plannets: list[Plannet]) -> str:

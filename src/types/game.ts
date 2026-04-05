@@ -28,9 +28,28 @@ export interface Battle {
   defenderRoll: number | null
 }
 
+export type BattleOutcomeType =
+  | 'Low Cost Win'
+  | 'Medium Cost Win'
+  | 'High Cost Win'
+  | 'Mild Defeat'
+  | 'Modest Defeat'
+  | 'Major Defeat'
+
+export interface PlayerBattleCasualty {
+  playerId: number
+  playerName: string
+  outcome: BattleOutcomeType
+  infantryBefore: number
+  infantryAfter: number
+  removed: boolean
+}
+
 export interface BattleResult {
   battle: Battle
   winner: TeamName
+  margin: number
+  casualties: PlayerBattleCasualty[]
 }
 
 export class Player {

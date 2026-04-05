@@ -191,8 +191,6 @@ const renderTeamStats = (s: GameState): void => {
 
 // ── Battle UI ────────────────────────────────────────
 
-const RESULT_DELAY_MS = 4000
-
 const renderBattle = (s: GameState): void => {
   // Show result screen if a battle was just resolved
   if (s.lastBattleResult) {
@@ -201,7 +199,16 @@ const renderBattle = (s: GameState): void => {
     const b = r.battle
     const attackerLabel = SHORT_TEAM[b.attackingTeam] ?? b.attackingTeam
     const defenderLabel = b.defendingTeam ? (SHORT_TEAM[b.defendingTeam] ?? b.defendingTeam) : 'Unowned'
-    const winnerLabel = SHORT_TEAM[r.winner] ?? r.winner
+    const casualtyHtml = r.casualties.length > 0
+      ? `<div style="margin-top:10px;text-align:left;">
+          <div style="font-size:0.75rem;color:#999;margin-bottom:4px;text-align:center;">Casualties (margin: ${r.margin})</div>
+          ${r.casualties.map(c =>
+            `<div style="font-size:0.7rem;color:${c.removed ? '#e74c3c' : '#f39c12'};padding:2px 0;">
+              ${c.playerName}: ${c.outcome} — ${c.removed ? 'REMOVED' : `${c.infantryBefore} → ${c.infantryAfter} infantry`}
+            </div>`
+          ).join('')}
+        </div>`
+      : ''
 
     battleModal.innerHTML = `
       <h2>Battle Result</h2>
@@ -219,8 +226,15 @@ const renderBattle = (s: GameState): void => {
         </div>
       </div>
       <div style="font-size:0.85rem;color:#ccc;margin:8px 0;">${attackerLabel}: ${b.attackerRoll} vs ${defenderLabel}: ${b.defenderRoll}</div>
-      <div class="battle-outcome win">${winnerLabel} keeps ${b.planetName}!</div>
+      <div class="battle-outcome win">${r.winner === b.defendingTeam ? `${r.winner} maintains control of ${b.planetName}.` : `${r.winner} takes control of ${b.planetName}.`}</div>
+      ${casualtyHtml}
+      <button id="battle-continue-btn">Continue</button>
     `
+
+    document.getElementById('battle-continue-btn')?.addEventListener('click', () => {
+      state = state.dismissBattleResult()
+      renderGrid(state)
+    })
     return
   }
 
@@ -272,29 +286,12 @@ const renderBattle = (s: GameState): void => {
 
   document.getElementById('roll-attacker')?.addEventListener('click', () => {
     state = state.applyBattleRoll(b.attackingTeam)
-    if (state.lastBattleResult) {
-      // Battle resolved — show result, then auto-dismiss after delay
-      renderGrid(state)
-      setTimeout(() => {
-        state = state.dismissBattleResult()
-        renderGrid(state)
-      }, RESULT_DELAY_MS)
-    } else {
-      renderGrid(state)
-    }
+    renderGrid(state)
   })
 
   document.getElementById('roll-defender')?.addEventListener('click', () => {
     state = state.applyBattleRoll(b.defendingTeam ?? b.attackingTeam)
-    if (state.lastBattleResult) {
-      renderGrid(state)
-      setTimeout(() => {
-        state = state.dismissBattleResult()
-        renderGrid(state)
-      }, RESULT_DELAY_MS)
-    } else {
-      renderGrid(state)
-    }
+    renderGrid(state)
   })
 }
 

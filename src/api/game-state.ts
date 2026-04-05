@@ -1,4 +1,4 @@
-import type { Position, Grid, Battle, BattleResult } from '../types/game'
+import type { Position, Grid, Battle, BattleResult, BattleOutcomeType, PlayerBattleCasualty } from '../types/game'
 import { Player, Plannet, TeamName } from '../types/game'
 import { createGrid, GRID_ROWS, GRID_COLS } from '../utils/grid'
 import { isValidMove } from '../utils/validate-move'
@@ -50,6 +50,90 @@ const clonePlayers = (players: Player[]): Player[] =>
     np.infantry = p.infantry
     return np
   })
+
+const computeCasualties = (
+  players: Player[],
+  winnerPlayerIds: number[],
+  loserPlayerIds: number[],
+  margin: number,
+): PlayerBattleCasualty[] => {
+  const casualties: PlayerBattleCasualty[] = []
+
+  // Winners
+  let winOutcome: BattleOutcomeType
+  let winReduction: number
+  if (margin > 10) {
+    winOutcome = 'Low Cost Win'
+    winReduction = 0
+  } else if (margin >= 5) {
+    winOutcome = 'Medium Cost Win'
+    winReduction = 0.25
+  } else {
+    winOutcome = 'High Cost Win'
+    winReduction = 0.50
+  }
+
+  for (const id of winnerPlayerIds) {
+    const p = players.find(pl => pl.id === id)
+    if (!p) continue
+    const before = p.infantry
+    const after = Math.round(before * (1 - winReduction))
+    casualties.push({
+      playerId: id,
+      playerName: p.name,
+      outcome: winOutcome,
+      infantryBefore: before,
+      infantryAfter: after,
+      removed: false,
+    })
+  }
+
+  // Losers
+  let loseOutcome: BattleOutcomeType
+  let loseReduction: number
+  let removed = false
+  if (margin > 10) {
+    loseOutcome = 'Major Defeat'
+    loseReduction = 1
+    removed = true
+  } else if (margin >= 6) {
+    loseOutcome = 'Modest Defeat'
+    loseReduction = 0.66
+  } else {
+    loseOutcome = 'Mild Defeat'
+    loseReduction = 0.33
+  }
+
+  for (const id of loserPlayerIds) {
+    const p = players.find(pl => pl.id === id)
+    if (!p) continue
+    const before = p.infantry
+    const after = removed ? 0 : Math.round(before * (1 - loseReduction))
+    casualties.push({
+      playerId: id,
+      playerName: p.name,
+      outcome: loseOutcome,
+      infantryBefore: before,
+      infantryAfter: after,
+      removed,
+    })
+  }
+
+  return casualties
+}
+
+const applyCasualties = (players: Player[], casualties: PlayerBattleCasualty[]): Player[] => {
+  const removedIds = new Set(casualties.filter(c => c.removed).map(c => c.playerId))
+  const updated = players
+    .filter(p => !removedIds.has(p.id))
+    .map(p => {
+      const np = new Player(p.id, p.name, p.team, p.position)
+      const casualty = casualties.find(c => c.playerId === p.id)
+      np.infantry = casualty ? casualty.infantryAfter : p.infantry
+      return np
+    })
+  return updated
+}
 
 const STARTING_PLAYERS: { name: string; team: TeamName; position: Position }[] = [
   { name: 'Clone Trooper 1', team: 'Grand Army of the Republic', position: { row: 31, col: 11 } },
@@ -259,15 +343,21 @@ export class GameState {
       // Determine winner
       const attackerWins = updatedBattle.attackerRoll > updatedBattle.defenderRoll
       const winner = attackerWins ? battle.attackingTeam : (battle.defendingTeam ?? battle.attackingTeam)
+      const margin = Math.abs(updatedBattle.attackerRoll - updatedBattle.defenderRoll)
 
+      const winnerIds = attackerWins ? battle.attackerPlayerIds : battle.defenderPlayerIds
+      const loserIds = attackerWins ? battle.defenderPlayerIds : battle.attackerPlayerIds
+      const casualties = computeCasualties(this.players, winnerIds, loserIds, margin)
+
+      const newPlayers = applyCasualties(this.players, casualties)
       const newPlannets = clonePlannets(this.plannets)
       newPlannets[battle.planetIndex].currentOwner = winner
 
       const remainingBattles = this.pendingBattles.slice(1)
-      const resolvedResult: BattleResult = { battle: updatedBattle, winner }
+      const resolvedResult: BattleResult = { battle: updatedBattle, winner, margin, casualties }
 
       // Stay in 'battling' so UI can show the result screen
-      return new GameState(this.grid, this.players, newPlannets, this.activePlayerIndex, this.turn, 'battling', `Battle resolved!`, this.teamResources, remainingBattles, resolvedResult)
+      return new GameState(this.grid, newPlayers, newPlannets, this.activePlayerIndex, this.turn, 'battling', `Battle resolved!`, this.teamResources, remainingBattles, resolvedResult)
     }
 
     // Only one team has rolled so far
