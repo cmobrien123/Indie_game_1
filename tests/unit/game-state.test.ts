@@ -63,8 +63,9 @@ describe('GameState.applyMove', () => {
     }
     expect(result?.ok).toBe(true)
     if (result?.ok) {
-      expect(result.state.turn).toBe(2)
-      expect(result.state.activePlayerIndex).toBe(1)
+      expect(result.state.turn).toBe(1)
+      // applyMove no longer advances player — same player can keep moving
+      expect(result.state.activePlayerIndex).toBe(0)
     }
   })
 

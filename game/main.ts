@@ -138,7 +138,8 @@ const renderGrid = (s: GameState): void => {
   statusEl.textContent = s.lastMessage
   statusEl.className   = s.status === 'error' ? 'error' : ''
   const ap = s.activePlayer
-  turnCounterEl.textContent = `Turn ${s.turn} · ${ap.name} · ${posLabel(ap.position)}`
+  const fuel = s.teamFuel
+  turnCounterEl.textContent = `Turn ${s.turn} · ${ap.name} · ${posLabel(ap.position)} · Fuel: ${fuel}`
 
   renderTeamStats(s)
 }
@@ -158,13 +159,17 @@ const renderTeamStats = (s: GameState): void => {
     const ownedPlannets = s.plannets.filter(p => p.currentOwner === team.name)
     const plannetCount = ownedPlannets.length
 
-    const totals: Record<string, number> = {}
-    for (const key of RESOURCE_KEYS) totals[key] = 0
+    // Per-turn income from owned planets
+    const income: Record<string, number> = {}
+    for (const key of RESOURCE_KEYS) income[key] = 0
     for (const planet of ownedPlannets) {
       for (const key of RESOURCE_KEYS) {
-        totals[key] += planet.resourceStats[key] ?? 0
+        income[key] += planet.resourceStats[key] ?? 0
       }
     }
+
+    // Accumulated totals
+    const accumulated = s.teamResources[team.name] ?? {}
 
     const panel = document.createElement('div')
     panel.className = `team-panel ${team.cls}`
@@ -174,7 +179,7 @@ const renderTeamStats = (s: GameState): void => {
       <div class="stat-row"><span class="stat-label">Plannets</span><span class="stat-value">${plannetCount}</span></div>
       <hr class="stat-divider">
       ${RESOURCE_KEYS.map(k =>
-        `<div class="stat-row"><span class="stat-label">${k}</span><span class="stat-value">${totals[k]}</span></div>`
+        `<div class="stat-row"><span class="stat-label">${k}</span><span class="stat-value">${accumulated[k] ?? 0} <span style="color:#888">(+${income[k]}/turn)</span></span></div>`
       ).join('')}
     `
     teamStatsEl.appendChild(panel)
@@ -195,12 +200,17 @@ gridContainer.addEventListener('click', (e: MouseEvent) => {
   if (result.ok) {
     state = result.state
     renderGrid(state)
-    const prevPlayer = state.players[(state.activePlayerIndex - 1 + state.players.length) % state.players.length]
-    exportTurnCSV(posLabel(prevPlayer.position), state.turn - 1)
   } else {
     statusEl.textContent = result.reason
     statusEl.className   = 'error'
   }
+})
+
+const endMoveBtn = document.getElementById('end-move-btn') as HTMLButtonElement
+endMoveBtn.addEventListener('click', () => {
+  state = state.endPlayerTurn()
+  renderGrid(state)
+  exportTurnCSV(posLabel(state.activePlayer.position), state.turn)
 })
 
 renderLabels()

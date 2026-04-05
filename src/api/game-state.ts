@@ -6,7 +6,37 @@ import { CELL_MAP } from '../utils/access-map'
 import { findNearestCell3 } from '../utils/pathfinding'
 import { posLabel } from '../utils/labels'
 
+export type TeamResources = Record<string, Record<string, number>>
+
 export type MoveResult = { ok: true; state: GameState } | { ok: false; reason: string }
+
+const RESOURCE_KEYS = ['Money', 'RawMaterials', 'Fuel', 'ForceSensitivity']
+
+const startingResources = (): Record<string, number> => ({
+  Money: 50,
+  RawMaterials: 50,
+  Fuel: 45,
+  ForceSensitivity: 0,
+})
+
+const cloneTeamResources = (tr: TeamResources): TeamResources => {
+  const result: TeamResources = {}
+  for (const team of Object.keys(tr)) {
+    result[team] = { ...tr[team] }
+  }
+  return result
+}
+
+const accumulateResources = (teamResources: TeamResources, plannets: Plannet[]): void => {
+  for (const planet of plannets) {
+    if (!planet.currentOwner) continue
+    const totals = teamResources[planet.currentOwner]
+    if (!totals) continue
+    for (const key of RESOURCE_KEYS) {
+      totals[key] += planet.resourceStats[key] ?? 0
+    }
+  }
+}
 
 const STARTING_PLAYERS: { name: string; team: TeamName; position: Position }[] = [
   { name: 'Clone Trooper 1', team: 'Grand Army of the Republic', position: { row: 31, col: 11 } },
@@ -25,6 +55,7 @@ export class GameState {
   readonly turn: number
   readonly status: 'playing' | 'error'
   readonly lastMessage: string
+  readonly teamResources: TeamResources
 
   constructor(
     grid: Grid,
@@ -34,6 +65,7 @@ export class GameState {
     turn: number,
     status: 'playing' | 'error',
     lastMessage: string,
+    teamResources: TeamResources,
   ) {
     this.grid = grid
     this.players = players
@@ -42,10 +74,15 @@ export class GameState {
     this.turn = turn
     this.status = status
     this.lastMessage = lastMessage
+    this.teamResources = teamResources
   }
 
   get activePlayer(): Player {
     return this.players[this.activePlayerIndex]
+  }
+
+  get teamFuel(): number {
+    return this.teamResources[this.activePlayer.team]?.Fuel ?? 0
   }
 
   static create(): GameState {
@@ -84,12 +121,27 @@ export class GameState {
       }
     }
 
+    const teamResources: TeamResources = {
+      'Grand Army of the Republic': startingResources(),
+      'Confederacy of Independent Systems': startingResources(),
+    }
+
     const msg = GameState.buildMessage(grid, players[0], 1, plannets)
-    return new GameState(grid, players, plannets, 0, 1, 'playing', msg)
+    return new GameState(grid, players, plannets, 0, 1, 'playing', msg, teamResources)
   }
 
+  /** Move the active player one cell. Does NOT advance to next player. Consumes 1 fuel. */
   applyMove(targetPos: Position): MoveResult {
     const active = this.activePlayer
+
+    // Check fuel
+    const fuel = this.teamResources[active.team]?.Fuel ?? 0
+    if (fuel <= 0) {
+      return {
+        ok: false,
+        reason: 'No fuel remaining — end your move',
+      }
+    }
 
     if (!isValidMove(active.position, targetPos)) {
       return {
@@ -136,14 +188,32 @@ export class GameState {
       }
     }
 
-    const nextPlayerIndex = (this.activePlayerIndex + 1) % this.players.length
-    const nextTurn = this.turn + 1
-    const msg = GameState.buildMessage(newGrid, newPlayers[nextPlayerIndex], nextTurn, newPlannets)
+    // Consume 1 fuel
+    const newTeamResources = cloneTeamResources(this.teamResources)
+    newTeamResources[active.team].Fuel -= 1
+
+    const msg = GameState.buildMessage(newGrid, newPlayers[this.activePlayerIndex], this.turn, newPlannets)
 
     return {
       ok: true,
-      state: new GameState(newGrid, newPlayers, newPlannets, nextPlayerIndex, nextTurn, 'playing', msg),
+      state: new GameState(newGrid, newPlayers, newPlannets, this.activePlayerIndex, this.turn, 'playing', msg, newTeamResources),
     }
+  }
+
+  /** End the current player's move and advance to the next player. */
+  endPlayerTurn(): GameState {
+    const nextPlayerIndex = (this.activePlayerIndex + 1) % this.players.length
+    const turnComplete = nextPlayerIndex === 0
+
+    const newTeamResources = cloneTeamResources(this.teamResources)
+    if (turnComplete) {
+      accumulateResources(newTeamResources, this.plannets)
+    }
+
+    const nextTurn = turnComplete ? this.turn + 1 : this.turn
+    const msg = GameState.buildMessage(this.grid, this.players[nextPlayerIndex], nextTurn, this.plannets)
+
+    return new GameState(this.grid, this.players, this.plannets, nextPlayerIndex, nextTurn, 'playing', msg, newTeamResources)
   }
 
   private static buildMessage(grid: Grid, player: Player, turn: number, plannets: Plannet[]): string {

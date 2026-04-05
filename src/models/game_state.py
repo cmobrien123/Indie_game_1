@@ -79,6 +79,8 @@ def _pos_label(pos: Position) -> str:
 
 
 class GameState:
+    RESOURCE_KEYS = ['Money', 'RawMaterials', 'Fuel', 'ForceSensitivity']
+
     def __init__(
         self,
         grid: list[list[dict]],
@@ -88,6 +90,7 @@ class GameState:
         turn: int,
         status: str,
         last_message: str,
+        team_resources: Optional[dict[str, dict[str, int]]] = None,
     ) -> None:
         self.grid = grid
         self.players = players
@@ -96,6 +99,10 @@ class GameState:
         self.turn = turn
         self.status = status
         self.last_message = last_message
+        self.team_resources = team_resources or {
+            'Grand Army of the Republic': {'Money': 50, 'RawMaterials': 50, 'Fuel': 45, 'ForceSensitivity': 0},
+            'Confederacy of Independent Systems': {'Money': 50, 'RawMaterials': 50, 'Fuel': 45, 'ForceSensitivity': 0},
+        }
 
     @property
     def active_player(self) -> Player:
@@ -144,8 +151,17 @@ class GameState:
         msg = GameState._build_message(grid, players[0], 1, plannets)
         return GameState(grid, players, plannets, 0, 1, 'playing', msg)
 
+    @property
+    def team_fuel(self) -> int:
+        return self.team_resources.get(self.active_player.team, {}).get('Fuel', 0)
+
     def apply_move(self, target_pos: Position) -> MoveResult:
+        """Move the active player one cell. Does NOT advance to next player. Consumes 1 fuel."""
         active = self.active_player
+
+        fuel = self.team_resources.get(active.team, {}).get('Fuel', 0)
+        if fuel <= 0:
+            return MoveResult.failure('No fuel remaining — end your move')
 
         if not _is_valid_move(active.position, target_pos):
             return MoveResult.failure('Invalid move — you can only step to an adjacent cell')
@@ -190,13 +206,38 @@ class GameState:
             if in_orbit and planet.current_owner != active.team:
                 planet.current_owner = active.team
 
-        next_player_index = (self.active_player_index + 1) % len(self.players)
-        next_turn = self.turn + 1
-        msg = GameState._build_message(new_grid, new_players[next_player_index], next_turn, new_plannets)
+        # Consume 1 fuel
+        new_team_resources = {
+            team: dict(resources)
+            for team, resources in self.team_resources.items()
+        }
+        new_team_resources[active.team]['Fuel'] -= 1
+
+        msg = GameState._build_message(new_grid, new_players[self.active_player_index], self.turn, new_plannets)
 
         return MoveResult.success(
-            GameState(new_grid, new_players, new_plannets, next_player_index, next_turn, 'playing', msg)
+            GameState(new_grid, new_players, new_plannets, self.active_player_index, self.turn, 'playing', msg, new_team_resources)
         )
+
+    def end_player_turn(self) -> 'GameState':
+        """End the current player's move and advance to the next player."""
+        next_player_index = (self.active_player_index + 1) % len(self.players)
+        turn_complete = next_player_index == 0
+
+        new_team_resources = {
+            team: dict(resources)
+            for team, resources in self.team_resources.items()
+        }
+        if turn_complete:
+            for planet in self.plannets:
+                if planet.current_owner and planet.current_owner in new_team_resources:
+                    for key in self.RESOURCE_KEYS:
+                        new_team_resources[planet.current_owner][key] += planet.resource_stats.get(key, 0)
+
+        next_turn = self.turn + 1 if turn_complete else self.turn
+        msg = GameState._build_message(self.grid, self.players[next_player_index], next_turn, self.plannets)
+
+        return GameState(self.grid, self.players, self.plannets, next_player_index, next_turn, 'playing', msg, new_team_resources)
 
     @staticmethod
     def _build_message(grid: list[list[dict]], player: Player, turn: int, plannets: list[Plannet]) -> str:

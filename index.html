@@ -185,6 +185,22 @@
       color: #888;
     }
 
+    #end-move-btn {
+      margin-top: 8px;
+      padding: 8px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background: #e67e22;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.15s;
+    }
+
+    #end-move-btn:hover { background: #d35400; }
+
     /* ── Team stats panel ────────────────────────── */
 
     #team-stats {
@@ -244,6 +260,7 @@
   </div>
 
   <p id="turn-counter"></p>
+  <button id="end-move-btn">End Move</button>
   <div id="team-stats"></div>
   <script src="dist/bundle.js"></script>
 </body>
