@@ -118,14 +118,34 @@
     .cell:hover { filter: brightness(1.35); }
 
     .cell.occupied {
-      background: #e94560;
       cursor: default;
     }
 
-    .cell.occupied::after {
-      content: '▲';
-      font-size: 11px;
+    .cell.occupied.team-gar {
+      background: #27ae60;
+    }
+
+    .cell.occupied.team-cis {
+      background: #e91e8c;
+    }
+
+    .cell.occupied.active-player {
+      outline: 2px solid #f1c40f;
+      outline-offset: -2px;
+      z-index: 1;
+      animation: blink 0.8s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .player-marker {
+      font-size: 10px;
       color: #fff;
+      pointer-events: none;
+      user-select: none;
     }
 
     .cell.adjacent {

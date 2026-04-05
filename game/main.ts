@@ -1,8 +1,8 @@
-import { createGameState, applyMove } from '../src/api/game-state'
+import { GameState } from '../src/models/game-state'
 import { getAdjacentCells, GRID_ROWS, GRID_COLS } from '../src/utils/grid'
 import { exportTurnCSV } from '../src/utils/csv-export'
 import { posLabel } from '../src/utils/labels'
-import type { GameState, Position } from '../src/types/game'
+import type { Position } from '../src/types/game'
 
 // Hex cell dimensions (pointy-top, odd-r offset)
 const HEX_W = 30          // cell width in px
@@ -16,7 +16,12 @@ const colLabelChar = (col: number) => {
 }
 const rowLabelNum = (row: number) => String(row + 1)
 
-let state: GameState = createGameState()
+const TEAM_CLASS: Record<string, string> = {
+  'Grand Army of the Republic': 'team-gar',
+  'Confederacy of Independent Systems': 'team-cis',
+}
+
+let state = GameState.create()
 
 const gridContainer = document.getElementById('grid-container') as HTMLDivElement
 const colLabelsEl   = document.getElementById('col-labels')    as HTMLDivElement
@@ -46,9 +51,19 @@ const renderLabels = (): void => {
 }
 
 const renderGrid = (s: GameState): void => {
+  const active = s.activePlayer
   const adjacentSet = new Set(
-    getAdjacentCells(s.grid, s.playerPos).map(c => `${c.position.row},${c.position.col}`)
+    getAdjacentCells(s.grid, active.position).map(c => `${c.position.row},${c.position.col}`)
   )
+
+  // Build a map of cell -> players on that cell
+  const playersByCell = new Map<string, typeof s.players>()
+  for (const player of s.players) {
+    const key = `${player.position.row},${player.position.col}`
+    const list = playersByCell.get(key) ?? []
+    list.push(player)
+    playersByCell.set(key, list)
+  }
 
   gridContainer.style.width  = `${GRID_COLS * HEX_W + ODD_OFFSET}px`
   gridContainer.style.height = `${(GRID_ROWS - 1) * HEX_V_STEP + HEX_H}px`
@@ -65,9 +80,21 @@ const renderGrid = (s: GameState): void => {
       el.style.top       = `${row * HEX_V_STEP}px`
 
       el.classList.add(`cell-${cell.cellValue}`)
-      if (cell.isOccupied) {
-        el.classList.add('occupied')
-      } else if (adjacentSet.has(`${row},${col}`)) {
+
+      const cellKey = `${row},${col}`
+      const playersHere = playersByCell.get(cellKey)
+
+      if (playersHere && playersHere.length > 0) {
+        const isActive = playersHere.some(p => p.id === active.id)
+        const teamClass = TEAM_CLASS[playersHere[0].team]
+        el.classList.add('occupied', teamClass)
+        if (isActive) el.classList.add('active-player')
+
+        const marker = document.createElement('span')
+        marker.className = 'player-marker'
+        marker.textContent = playersHere.length > 1 ? `▲${playersHere.length}` : '▲'
+        el.appendChild(marker)
+      } else if (adjacentSet.has(cellKey)) {
         el.classList.add('adjacent')
       }
 
@@ -77,7 +104,8 @@ const renderGrid = (s: GameState): void => {
 
   statusEl.textContent = s.lastMessage
   statusEl.className   = s.status === 'error' ? 'error' : ''
-  turnCounterEl.textContent = `Turn ${s.turn} · ${posLabel(s.playerPos)}`
+  const ap = s.activePlayer
+  turnCounterEl.textContent = `Turn ${s.turn} · ${ap.name} · ${posLabel(ap.position)}`
 }
 
 gridContainer.addEventListener('click', (e: MouseEvent) => {
@@ -90,11 +118,12 @@ gridContainer.addEventListener('click', (e: MouseEvent) => {
     col: Number(cell.dataset['col']),
   }
 
-  const result = applyMove(state, targetPos)
+  const result = state.applyMove(targetPos)
   if (result.ok) {
     state = result.state
     renderGrid(state)
-    exportTurnCSV(posLabel(state.playerPos), state.turn - 1)
+    const prevPlayer = state.players[(state.activePlayerIndex - 1 + state.players.length) % state.players.length]
+    exportTurnCSV(posLabel(prevPlayer.position), state.turn - 1)
   } else {
     statusEl.textContent = result.reason
     statusEl.className   = 'error'

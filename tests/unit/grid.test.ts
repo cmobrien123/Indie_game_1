@@ -33,9 +33,9 @@ describe('createGrid', () => {
     expect(grid[2][1].position).toEqual({ row: 2, col: 1 })
   })
 
-  it('creates cells as unoccupied', () => {
+  it('creates cells without player-specific state', () => {
     const grid = createGrid(3, 3)
-    expect(grid.every(row => row.every(cell => !cell.isOccupied))).toBe(true)
+    expect(grid.every(row => row.every(cell => 'accessible' in cell))).toBe(true)
   })
 })
 

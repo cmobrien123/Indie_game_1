@@ -16,7 +16,7 @@ export const createGrid = (
     for (let col = 0; col < cols; col++) {
       const cellValue = cellMap ? (cellMap[row]?.[col] ?? 0) : 1
       const accessible = cellValue === 1 || cellValue === 2
-      rowCells.push({ position: { row, col }, isOccupied: false, accessible, cellValue })
+      rowCells.push({ position: { row, col }, accessible, cellValue })
     }
     grid.push(rowCells)
   }
