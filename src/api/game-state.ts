@@ -171,6 +171,7 @@ export class GameState {
     const newGrid = this.grid.map(row => row.map(cell => ({ ...cell })))
     const newPlayers = this.players.map((p, i) => {
       const np = new Player(p.id, p.name, p.team, p.position)
+      np.infantry = p.infantry
       if (i === this.activePlayerIndex) np.moveTo(targetPos)
       return np
     })

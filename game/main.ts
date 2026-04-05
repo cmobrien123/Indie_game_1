@@ -176,6 +176,7 @@ const renderTeamStats = (s: GameState): void => {
     panel.innerHTML = `
       <h2>${team.label}</h2>
       <div class="stat-row"><span class="stat-label">Players</span><span class="stat-value">${playerCount}</span></div>
+      <div class="stat-row"><span class="stat-label">Infantry</span><span class="stat-value">${s.players.filter(p => p.team === team.name).reduce((sum, p) => sum + p.infantry, 0)}</span></div>
       <div class="stat-row"><span class="stat-label">Plannets</span><span class="stat-value">${plannetCount}</span></div>
       <hr class="stat-divider">
       ${RESOURCE_KEYS.map(k =>

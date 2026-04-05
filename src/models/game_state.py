@@ -187,6 +187,7 @@ class GameState:
         new_players = []
         for i, p in enumerate(self.players):
             np = Player(p.id, p.name, p.team, p.position)
+            np.infantry = p.infantry
             if i == self.active_player_index:
                 np.move_to(target_pos)
             new_players.append(np)

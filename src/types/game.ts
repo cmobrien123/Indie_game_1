@@ -20,12 +20,14 @@ export class Player {
   readonly name: string
   readonly team: TeamName
   position: Position
+  infantry: number
 
   constructor(id: number, name: string, team: TeamName, position: Position) {
     this.id = id
     this.name = name
     this.team = team
     this.position = { ...position }
+    this.infantry = team === 'Grand Army of the Republic' ? 12 : 16
   }
 
   moveTo(target: Position): void {

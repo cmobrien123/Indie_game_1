@@ -17,12 +17,17 @@ class Position:
 TeamName = str  # 'Grand Army of the Republic' | 'Confederacy of Independent Systems'
 
 
+GAR_STARTING_INFANTRY = 12
+CIS_STARTING_INFANTRY = 16
+
+
 class Player:
     def __init__(self, id: int, name: str, team: TeamName, position: Position) -> None:
         self.id = id
         self.name = name
         self.team = team
         self.position = Position(position.row, position.col)
+        self.infantry = GAR_STARTING_INFANTRY if team == 'Grand Army of the Republic' else CIS_STARTING_INFANTRY
 
     def move_to(self, target: Position) -> None:
         self.position = Position(target.row, target.col)
