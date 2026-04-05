@@ -57,6 +57,33 @@ export class GameState {
 
     const plannets = Plannet.discoverAll(grid)
 
+    // Ensure each player starts in orbit of a planet owned by their team
+    const usedCells = new Set<string>()
+    for (const player of players) {
+      const inFriendlyOrbit = plannets.some(
+        p => p.currentOwner === player.team &&
+          p.cellsInOrbit.some(o => o.row === player.position.row && o.col === player.position.col)
+      )
+      if (!inFriendlyOrbit) {
+        const friendlyPlanets = plannets.filter(p => p.currentOwner === player.team)
+        let placed = false
+        for (const planet of friendlyPlanets) {
+          for (const orbit of planet.cellsInOrbit) {
+            const key = `${orbit.row},${orbit.col}`
+            if (!usedCells.has(key)) {
+              player.moveTo(orbit)
+              usedCells.add(key)
+              placed = true
+              break
+            }
+          }
+          if (placed) break
+        }
+      } else {
+        usedCells.add(`${player.position.row},${player.position.col}`)
+      }
+    }
+
     const msg = GameState.buildMessage(grid, players[0], 1, plannets)
     return new GameState(grid, players, plannets, 0, 1, 'playing', msg)
   }
@@ -98,6 +125,16 @@ export class GameState {
     const newPlannets = this.plannets.map(pl =>
       new Plannet(pl.name, pl.cellLocation, pl.cellsInOrbit, pl.currentOwner, pl.resourceStats)
     )
+
+    // Update planet ownership if the moved unit landed in an orbit cell
+    for (const planet of newPlannets) {
+      const inOrbit = planet.cellsInOrbit.some(
+        o => o.row === targetPos.row && o.col === targetPos.col
+      )
+      if (inOrbit && planet.currentOwner !== active.team) {
+        planet.currentOwner = active.team
+      }
+    }
 
     const nextPlayerIndex = (this.activePlayerIndex + 1) % this.players.length
     const nextTurn = this.turn + 1

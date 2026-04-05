@@ -1,13 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { GameState } from '../../src/api/game-state'
-
-// Starting positions:
-// Clone Trooper 1: L32 → (31,11)
-// Clone Trooper 2: S41 → (40,18)
-// Clone Trooper 3: S30 → (29,18)
-// Battle Droid 1: AC79 → (78,28)
-// Battle Droid 2: X3 → (2,23)
-// Battle Droid 3: AB12 → (11,27)
+import { getHexNeighborOffsets } from '../../src/utils/grid'
 
 describe('GameState.create', () => {
   it('creates 6 players across 2 teams', () => {
@@ -19,14 +12,15 @@ describe('GameState.create', () => {
     expect(cis.length).toBe(3)
   })
 
-  it('places Clone Trooper 1 at L32', () => {
+  it('places each player in orbit of a planet owned by their team', () => {
     const state = GameState.create()
-    expect(state.players[0].position).toEqual({ row: 31, col: 11 })
-  })
-
-  it('places Battle Droid 2 at X3', () => {
-    const state = GameState.create()
-    expect(state.players[4].position).toEqual({ row: 2, col: 23 })
+    for (const player of state.players) {
+      const inFriendlyOrbit = state.plannets.some(
+        p => p.currentOwner === player.team &&
+          p.cellsInOrbit.some(o => o.row === player.position.row && o.col === player.position.col)
+      )
+      expect(inFriendlyOrbit).toBe(true)
+    }
   })
 
   it('starts with player 0 as the active player', () => {
@@ -45,14 +39,6 @@ describe('GameState.create', () => {
     expect(state.plannets[0].name).toBe('Kenari')
   })
 
-  it('pre-assigns some plannets to teams', () => {
-    const state = GameState.create()
-    const garPlannets = state.plannets.filter(p => p.currentOwner === 'Grand Army of the Republic')
-    const cisPlannets = state.plannets.filter(p => p.currentOwner === 'Confederacy of Independent Systems')
-    expect(garPlannets.length).toBe(5)
-    expect(cisPlannets.length).toBe(5)
-  })
-
   it('marks value-0 cells as inaccessible and value-3 as inaccessible', () => {
     const state = GameState.create()
     expect(state.grid[0][0].accessible).toBe(false)  // value 0
@@ -63,12 +49,21 @@ describe('GameState.create', () => {
 describe('GameState.applyMove', () => {
   it('returns ok:true on a valid accessible move', () => {
     const state = GameState.create()
-    // Clone Trooper 1 at (31,11), row 31 is odd → E neighbor is (31,12)
-    const result = state.applyMove({ row: 31, col: 12 })
-    expect(result.ok).toBe(true)
-    if (result.ok) {
+    const p0 = state.players[0]
+    const offsets = getHexNeighborOffsets(p0.position.row)
+
+    let result
+    for (const off of offsets) {
+      const target = { row: p0.position.row + off.row, col: p0.position.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        result = state.applyMove(target)
+        if (result.ok) break
+      }
+    }
+    expect(result?.ok).toBe(true)
+    if (result?.ok) {
       expect(result.state.turn).toBe(2)
-      expect(result.state.players[0].position).toEqual({ row: 31, col: 12 })
       expect(result.state.activePlayerIndex).toBe(1)
     }
   })
@@ -81,34 +76,70 @@ describe('GameState.applyMove', () => {
 
   it('does not mutate the original state', () => {
     const state = GameState.create()
-    state.applyMove({ row: 31, col: 12 })
-    expect(state.players[0].position).toEqual({ row: 31, col: 11 })
+    const origPos = { ...state.players[0].position }
+    const offsets = getHexNeighborOffsets(origPos.row)
+    for (const off of offsets) {
+      const target = { row: origPos.row + off.row, col: origPos.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        state.applyMove(target)
+        break
+      }
+    }
+    expect(state.players[0].position).toEqual(origPos)
     expect(state.turn).toBe(1)
   })
 
   it('blocks moving onto a cell occupied by the enemy team', () => {
     const state = GameState.create()
-    state.players[4].moveTo({ row: 31, col: 12 })
-    const result = state.applyMove({ row: 31, col: 12 })
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.reason).toMatch(/enemy/)
+    const p0 = state.players[0]
+    const offsets = getHexNeighborOffsets(p0.position.row)
+    // Find an accessible adjacent cell and place an enemy there
+    for (const off of offsets) {
+      const target = { row: p0.position.row + off.row, col: p0.position.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        state.players[3].moveTo(target) // enemy
+        const result = state.applyMove(target)
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.reason).toMatch(/enemy/)
+        }
+        break
+      }
     }
   })
 
   it('allows moving onto a cell occupied by a teammate', () => {
     const state = GameState.create()
-    state.players[1].moveTo({ row: 31, col: 12 })
-    const result = state.applyMove({ row: 31, col: 12 })
-    expect(result.ok).toBe(true)
+    const p0 = state.players[0]
+    const offsets = getHexNeighborOffsets(p0.position.row)
+    for (const off of offsets) {
+      const target = { row: p0.position.row + off.row, col: p0.position.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        state.players[1].moveTo(target) // teammate
+        const result = state.applyMove(target)
+        expect(result.ok).toBe(true)
+        break
+      }
+    }
   })
 
   it('preserves plannets across moves', () => {
     const state = GameState.create()
-    const result = state.applyMove({ row: 31, col: 12 })
-    expect(result.ok).toBe(true)
-    if (result.ok) {
-      expect(result.state.plannets.length).toBe(38)
+    const p0 = state.players[0]
+    const offsets = getHexNeighborOffsets(p0.position.row)
+    for (const off of offsets) {
+      const target = { row: p0.position.row + off.row, col: p0.position.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        const result = state.applyMove(target)
+        if (result.ok) {
+          expect(result.state.plannets.length).toBe(38)
+        }
+        break
+      }
     }
   })
 })

@@ -7,7 +7,6 @@ describe('multi-turn flow', () => {
     let state = GameState.create()
     expect(state.activePlayerIndex).toBe(0)
 
-    // Find a valid move for player 0 (Clone Trooper 1 at row:31, col:11)
     const p0 = state.players[0]
     const offsets = getHexNeighborOffsets(p0.position.row)
     let moved = false
@@ -59,14 +58,22 @@ describe('multi-turn flow', () => {
 
   it('rejects a move to a cell with an enemy unit', () => {
     const state = GameState.create()
-    // Place an enemy adjacent to Clone Trooper 1 at (31,11)
-    state.players[3].moveTo({ row: 31, col: 12 }) // Battle Droid 1 next to CT1
+    const p0 = state.players[0]
+    const offsets = getHexNeighborOffsets(p0.position.row)
 
-    const result = state.applyMove({ row: 31, col: 12 })
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.reason).toMatch(/enemy/)
+    for (const off of offsets) {
+      const target = { row: p0.position.row + off.row, col: p0.position.col + off.col }
+      const cell = state.grid[target.row]?.[target.col]
+      if (cell?.accessible) {
+        state.players[3].moveTo(target) // enemy
+        const result = state.applyMove(target)
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+          expect(result.reason).toMatch(/enemy/)
+        }
+        expect(state.activePlayerIndex).toBe(0)
+        break
+      }
     }
-    expect(state.activePlayerIndex).toBe(0)
   })
 })

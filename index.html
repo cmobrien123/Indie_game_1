@@ -164,6 +164,9 @@
     .cell.cell-3 { background: #e74c3c; cursor: not-allowed; }
     .cell.cell-3:hover { filter: none; }
 
+    .cell.orbit-owned.orbit-team-gar { background: #1a6b3a; }
+    .cell.orbit-owned.orbit-team-cis { background: #8b1a5c; }
+
     .planet-label {
       position: absolute;
       transform: translateX(-50%);
@@ -180,6 +183,48 @@
     #turn-counter {
       font-size: 0.85rem;
       color: #888;
+    }
+
+    /* ── Team stats panel ────────────────────────── */
+
+    #team-stats {
+      display: flex;
+      gap: 24px;
+      margin-top: 8px;
+    }
+
+    .team-panel {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 12px 16px;
+      min-width: 220px;
+    }
+
+    .team-panel h2 {
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      letter-spacing: 0.03em;
+    }
+
+    .team-panel.gar h2 { color: #27ae60; }
+    .team-panel.cis h2 { color: #e91e8c; }
+
+    .team-panel .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #ccc;
+      padding: 2px 0;
+    }
+
+    .team-panel .stat-row .stat-label { color: #999; }
+    .team-panel .stat-row .stat-value { font-weight: 600; color: #e0e0e0; }
+
+    .team-panel .stat-divider {
+      border: none;
+      border-top: 1px solid #0f3460;
+      margin: 6px 0;
     }
   </style>
 </head>
@@ -199,6 +244,7 @@
   </div>
 
   <p id="turn-counter"></p>
+  <div id="team-stats"></div>
   <script src="dist/bundle.js"></script>
 </body>
 </html>

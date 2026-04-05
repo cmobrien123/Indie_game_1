@@ -44,16 +44,56 @@ export class Player {
 const PLANNET_NAMES = [
   'Kenari', 'Serenno', 'AjanKloss', 'Yavin4', 'Felucia',
   'Mandalore', 'LolaSayu', 'Csilla', 'Kijimi', 'Bracca',
-  'CarrickStation', 'Kashyyk', 'Coruscant', 'Onderon', 'Plannet_15',
-  'Plannet_16', 'Alderaan', 'Plannet_18', 'Plannet_19', 'Plannet_20',
-  'HrakertStation', 'Plannet_22', 'Plannet_23', 'Jakku', 'Takodana',
-  'Fondor', 'RichiSation', 'Kammino', 'Kafrene', 'Endor',
+  'CarrickStation', 'Kashyyk', 'Coruscant', 'Onderon', 'NalHutta',
+  'Kessel', 'Alderaan', 'Plannet_18', 'Plannet_19', 'Bothawui',
+  'HrakertStation', 'Fondor', 'Scarif', 'Jakku', 'Takodana',
+  'YagDhul', 'RichiSation', 'Kammino', 'Kafrene', 'Endor',
   'Tatooine', 'Naboo', 'Geonosis', 'Bespin', 'DQar',
   'Ferrix', 'Hoth', 'Mustafar',
 ]
-const GAR_PLANETS = new Set([12, 13, 16, 17, 18])
-const CIS_PLANETS = new Set([0, 3, 4, 31, 34])
-const DEFAULT_RESOURCES = { credits: 100, fuel: 50, minerals: 30 }
+const GAR_PLANETS = new Set([2, 3, 5, 10, 11, 12, 13, 16, 17, 18, 20, 24, 26, 27, 29, 31, 33, 36])
+const CIS_PLANETS = new Set([0, 1, 4, 6, 7, 8, 9, 14, 15, 19, 21, 22, 23, 25, 28, 30, 32, 34, 35, 37])
+const DEFAULT_RESOURCES = { Money: 0, RawMaterials: 0, Fuel: 0, ForceSensitivity: 0 }
+const PLANET_RESOURCES: Record<string, number>[] = [
+  { Money: 3, RawMaterials: 5, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 1, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 1, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 0, RawMaterials: 1, Fuel: 0, ForceSensitivity: 3 },
+  { Money: 5, RawMaterials: 5, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 15, RawMaterials: 1, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 0, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 1, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 0, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 5, Fuel: 8, ForceSensitivity: 1 },
+  { Money: 20, RawMaterials: 8, Fuel: 5, ForceSensitivity: 4 },
+  { Money: 5, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 15, RawMaterials: 3, Fuel: 15, ForceSensitivity: 1 },
+  { Money: 5, RawMaterials: 10, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 15, RawMaterials: 1, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 0, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 1, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 3, RawMaterials: 3, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 0, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 5, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 3, RawMaterials: 1, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 6, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 5, Fuel: 5, ForceSensitivity: 0 },
+  { Money: 3, RawMaterials: 3, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 0, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 10, RawMaterials: 8, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 0, RawMaterials: 1, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 0, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 3, Fuel: 3, ForceSensitivity: 1 },
+  { Money: 10, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 10, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 5, RawMaterials: 3, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 3, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 3, Fuel: 3, ForceSensitivity: 0 },
+  { Money: 1, RawMaterials: 3, Fuel: 0, ForceSensitivity: 0 },
+  { Money: 0, RawMaterials: 10, Fuel: 3, ForceSensitivity: 0 },
+]
 
 export class Plannet {
   readonly name: string
@@ -101,7 +141,10 @@ export class Plannet {
           ? PLANNET_NAMES[index]
           : `Planet ${index + 1}`
 
-        plannets.push(new Plannet(name, corePos, orbit, owner, { ...DEFAULT_RESOURCES }))
+        const resources = index < PLANET_RESOURCES.length
+          ? { ...PLANET_RESOURCES[index] }
+          : { ...DEFAULT_RESOURCES }
+        plannets.push(new Plannet(name, corePos, orbit, owner, resources))
         index++
       }
     }

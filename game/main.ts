@@ -28,6 +28,7 @@ const colLabelsEl   = document.getElementById('col-labels')    as HTMLDivElement
 const rowLabelsEl   = document.getElementById('row-labels')    as HTMLDivElement
 const statusEl      = document.getElementById('status')        as HTMLParagraphElement
 const turnCounterEl = document.getElementById('turn-counter')  as HTMLParagraphElement
+const teamStatsEl   = document.getElementById('team-stats')    as HTMLDivElement
 
 const renderLabels = (): void => {
   colLabelsEl.innerHTML = ''
@@ -60,6 +61,16 @@ const renderGrid = (s: GameState): void => {
   const planetNameByCell = new Map<string, string>()
   for (const planet of s.plannets) {
     planetNameByCell.set(`${planet.cellLocation.row},${planet.cellLocation.col}`, planet.name)
+  }
+
+  // Build a map of orbit cell -> owning team (for coloring)
+  const orbitOwnerByCell = new Map<string, string>()
+  for (const planet of s.plannets) {
+    if (!planet.currentOwner) continue
+    const teamCls = TEAM_CLASS[planet.currentOwner]
+    for (const o of planet.cellsInOrbit) {
+      orbitOwnerByCell.set(`${o.row},${o.col}`, teamCls)
+    }
   }
 
   // Build a map of cell -> players on that cell
@@ -104,6 +115,11 @@ const renderGrid = (s: GameState): void => {
         el.classList.add('adjacent')
       }
 
+      const orbitTeam = orbitOwnerByCell.get(cellKey)
+      if (orbitTeam && !(playersHere && playersHere.length > 0)) {
+        el.classList.add('orbit-owned', `orbit-${orbitTeam}`)
+      }
+
       gridContainer.appendChild(el)
     }
   }
@@ -123,6 +139,46 @@ const renderGrid = (s: GameState): void => {
   statusEl.className   = s.status === 'error' ? 'error' : ''
   const ap = s.activePlayer
   turnCounterEl.textContent = `Turn ${s.turn} · ${ap.name} · ${posLabel(ap.position)}`
+
+  renderTeamStats(s)
+}
+
+const RESOURCE_KEYS = ['Money', 'RawMaterials', 'Fuel', 'ForceSensitivity']
+
+const renderTeamStats = (s: GameState): void => {
+  const teams: { name: string; label: string; cls: string }[] = [
+    { name: 'Grand Army of the Republic', label: 'Grand Army of the Republic', cls: 'gar' },
+    { name: 'Confederacy of Independent Systems', label: 'Confederacy of Independent Systems', cls: 'cis' },
+  ]
+
+  teamStatsEl.innerHTML = ''
+
+  for (const team of teams) {
+    const playerCount = s.players.filter(p => p.team === team.name).length
+    const ownedPlannets = s.plannets.filter(p => p.currentOwner === team.name)
+    const plannetCount = ownedPlannets.length
+
+    const totals: Record<string, number> = {}
+    for (const key of RESOURCE_KEYS) totals[key] = 0
+    for (const planet of ownedPlannets) {
+      for (const key of RESOURCE_KEYS) {
+        totals[key] += planet.resourceStats[key] ?? 0
+      }
+    }
+
+    const panel = document.createElement('div')
+    panel.className = `team-panel ${team.cls}`
+    panel.innerHTML = `
+      <h2>${team.label}</h2>
+      <div class="stat-row"><span class="stat-label">Players</span><span class="stat-value">${playerCount}</span></div>
+      <div class="stat-row"><span class="stat-label">Plannets</span><span class="stat-value">${plannetCount}</span></div>
+      <hr class="stat-divider">
+      ${RESOURCE_KEYS.map(k =>
+        `<div class="stat-row"><span class="stat-label">${k}</span><span class="stat-value">${totals[k]}</span></div>`
+      ).join('')}
+    `
+    teamStatsEl.appendChild(panel)
+  }
 }
 
 gridContainer.addEventListener('click', (e: MouseEvent) => {

@@ -116,6 +116,31 @@ class GameState:
 
         plannets = Plannet.discover_all(grid)
 
+        # Ensure each player starts in orbit of a planet owned by their team
+        used_cells: set[tuple[int, int]] = set()
+        for player in players:
+            in_friendly_orbit = any(
+                p.current_owner == player.team
+                and any(o.row == player.position.row and o.col == player.position.col
+                        for o in p.cells_in_orbit)
+                for p in plannets
+            )
+            if not in_friendly_orbit:
+                friendly_planets = [p for p in plannets if p.current_owner == player.team]
+                placed = False
+                for planet in friendly_planets:
+                    for orbit in planet.cells_in_orbit:
+                        key = (orbit.row, orbit.col)
+                        if key not in used_cells:
+                            player.move_to(orbit)
+                            used_cells.add(key)
+                            placed = True
+                            break
+                    if placed:
+                        break
+            else:
+                used_cells.add((player.position.row, player.position.col))
+
         msg = GameState._build_message(grid, players[0], 1, plannets)
         return GameState(grid, players, plannets, 0, 1, 'playing', msg)
 
@@ -155,6 +180,15 @@ class GameState:
             Plannet(pl.name, pl.cell_location, pl.cells_in_orbit, pl.current_owner, pl.resource_stats)
             for pl in self.plannets
         ]
+
+        # Update planet ownership if the moved unit landed in an orbit cell
+        for planet in new_plannets:
+            in_orbit = any(
+                o.row == target_pos.row and o.col == target_pos.col
+                for o in planet.cells_in_orbit
+            )
+            if in_orbit and planet.current_owner != active.team:
+                planet.current_owner = active.team
 
         next_player_index = (self.active_player_index + 1) % len(self.players)
         next_turn = self.turn + 1

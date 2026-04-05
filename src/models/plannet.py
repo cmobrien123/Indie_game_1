@@ -5,9 +5,10 @@ from .player import Position, TeamName
 
 
 DEFAULT_RESOURCES: dict[str, int] = {
-    'credits': 100,
-    'fuel': 50,
-    'minerals': 30,
+    'Money': 0,
+    'RawMaterials': 0,
+    'Fuel': 0,
+    'ForceSensitivity': 0,
 }
 
 
@@ -71,12 +72,13 @@ class Plannet:
     def from_grid(cls, grid: list[list[dict]]) -> Plannet:
         """Create this planet from the grid, auto-detecting orbit cells."""
         orbit = _compute_orbit(grid, cls.CORE_ROW, cls.CORE_COL)
+        resources = dict(getattr(cls, 'resource_stats', DEFAULT_RESOURCES))
         return cls(
             cls.NAME,
             Position(cls.CORE_ROW, cls.CORE_COL),
             orbit,
             cls.DEFAULT_OWNER,
-            dict(DEFAULT_RESOURCES),
+            resources,
         )
 
     @staticmethod
@@ -106,247 +108,477 @@ class Kenari(Plannet):
     CORE_ROW = 1
     CORE_COL = 23
     DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":3, 
+        "RawMaterials":5, 
+        "Fuel":0
+    }
 
 
 class Serenno(Plannet):
     NAME = 'Serenno'
     CORE_ROW = 6
     CORE_COL = 18
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":1, 
+        "Fuel":0
+    }
 
 class AjanKloss(Plannet):
     NAME = 'AjanKloss'
     CORE_ROW = 7
     CORE_COL = 13
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":1, 
+        "Fuel":0
+    }
 
 
 class Yavin4(Plannet):
     NAME = 'Yavin4'
     CORE_ROW = 9
     CORE_COL = 21
-    DEFAULT_OWNER = 'Confederacy of Independent Systems'
-
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":0, 
+        "RawMaterials":1, 
+        "Fuel":0, 
+        "ForceSensitivity":3
+    }
 
 class Felucia(Plannet):
     NAME = 'Felucia'
     CORE_ROW = 10
     CORE_COL = 25
     DEFAULT_OWNER = 'Confederacy of Independent Systems'
-
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":5, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Mandalore(Plannet):
     NAME = 'Mandalore'
     CORE_ROW = 13
     CORE_COL = 18
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":15, 
+        "RawMaterials":1, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 
 class LolaSayu(Plannet):
     NAME = 'LolaSayu'
     CORE_ROW = 14
     CORE_COL = 27
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":0, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Csilla(Plannet):
     NAME = 'Csilla'
     CORE_ROW = 19
     CORE_COL = 1
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Kijimi(Plannet):
     NAME = 'Kijimi'
     CORE_ROW = 20
     CORE_COL = 24
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Bracca(Plannet):
     NAME = 'Bracca'
     CORE_ROW = 23
     CORE_COL = 20
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":1, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 class CarrickStation(Plannet):
     NAME = 'CarrickStation'
     CORE_ROW = 24
     CORE_COL = 13
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":0, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 
 class Kashyyk(Plannet):
     NAME = 'Kashyyk'
     CORE_ROW = 28
     CORE_COL = 20
-
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":5, 
+        "Fuel":8, 
+        "ForceSensitivity":1
+    }
 
 class Coruscant(Plannet):
     NAME = 'Coruscant'
     CORE_ROW = 29
     CORE_COL = 10
     DEFAULT_OWNER = 'Grand Army of the Republic'
-
+    resource_stats = {
+        "Money":20, 
+        "RawMaterials":8, 
+        "Fuel":5, 
+        "ForceSensitivity":4
+    }
 
 class Onderon(Plannet):
     NAME = 'Onderon'
     CORE_ROW = 30
     CORE_COL = 15
     DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
-
-class Plannet_15(Plannet):
-    NAME = 'Plannet_15'
+class NalHutta(Plannet):
+    NAME = 'NalHutta'
     CORE_ROW = 31
     CORE_COL = 30
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":15, 
+        "RawMaterials":3, 
+        "Fuel":15, 
+        "ForceSensitivity":1
+    }
 
 
 class Kessel(Plannet):
-    NAME = 'Plannet_16'
+    NAME = 'Kessel'
     CORE_ROW = 34
     CORE_COL = 39
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":10, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 class Alderaan(Plannet):
     NAME = 'Alderaan'
     CORE_ROW = 36
     CORE_COL = 12
     DEFAULT_OWNER = 'Grand Army of the Republic'
-
+    resource_stats = {
+        "Money":15, 
+        "RawMaterials":1, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Plannet_18(Plannet):
     NAME = 'Plannet_18'
     CORE_ROW = 41
     CORE_COL = 17
     DEFAULT_OWNER = 'Grand Army of the Republic'
-
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":0, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Corellia(Plannet):
-    NAME = 'Plannet_19'
+    NAME = 'Corellia'
     CORE_ROW = 42
     CORE_COL = 13
     DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":1, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
-
-class Plannet_20(Plannet):
-    NAME = 'Plannet_20'
+class Bothawui(Plannet):
+    NAME = 'Bothawui'
     CORE_ROW = 43
     CORE_COL = 35
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":3, 
+        "RawMaterials":3, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 class HrakertStation(Plannet):
     NAME = 'HrakertStation'
     CORE_ROW = 47
     CORE_COL = 17
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":0, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
-
-class Plannet_22(Plannet):
-    NAME = 'Plannet_22'
+class Fondor(Plannet):
+    NAME = 'Fondor'
     CORE_ROW = 51
     CORE_COL = 22
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":5, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 
 class Scarif(Plannet):
-    NAME = 'Plannet_23'
+    NAME = 'Scarif'
     CORE_ROW = 64
     CORE_COL = 38
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":3, 
+        "RawMaterials":1, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 
 class Jakku(Plannet):
     NAME = 'Jakku'
     CORE_ROW = 66
     CORE_COL = 9
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":6, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Takodana(Plannet):
     NAME = 'Takodana'
     CORE_ROW = 66
     CORE_COL = 13
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":5, 
+        "Fuel":5, 
+        "ForceSensitivity":0
+    }
 
 
-class Fondor(Plannet):
-    NAME = 'Fondor'
+class YagDhul(Plannet):
+    NAME = 'YagDhul'
     CORE_ROW = 66
     CORE_COL = 17
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":3, 
+        "RawMaterials":3, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 
 class RichiSation(Plannet):
     NAME = 'RichiSation'
     CORE_ROW = 71
     CORE_COL = 35
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":0, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 
 class Kammino(Plannet):
     NAME = 'Kammino'
     CORE_ROW = 71
     CORE_COL = 39
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":10, 
+        "RawMaterials":8, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 
 class Kafrene(Plannet):
     NAME = 'Kafrene'
     CORE_ROW = 73
     CORE_COL = 1
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":0, 
+        "RawMaterials":1, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 
 class Endor(Plannet):
     NAME = 'Endor'
     CORE_ROW = 76
     CORE_COL = 8
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":0, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 
 class Tatooine(Plannet):
     NAME = 'Tatooine'
     CORE_ROW = 76
     CORE_COL = 35
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":3, 
+        "Fuel":3, 
+        "ForceSensitivity":1
+    }
 
 class Naboo(Plannet):
     NAME = 'Naboo'
     CORE_ROW = 77
     CORE_COL = 28
-    DEFAULT_OWNER = 'Confederacy of Independent Systems'
-
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":10, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Geonosis(Plannet):
     NAME = 'Geonosis'
     CORE_ROW = 77
     CORE_COL = 39
-
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":10, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Bespin(Plannet):
     NAME = 'Bespin'
     CORE_ROW = 81
     CORE_COL = 20
-
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":5, 
+        "RawMaterials":3, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 class DQar(Plannet):
     NAME = 'DQar'
     CORE_ROW = 81
     CORE_COL = 26
     DEFAULT_OWNER = 'Confederacy of Independent Systems'
-
+    resource_stats = {
+        "Money":3, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Ferrix(Plannet):
     NAME = 'Ferrix'
     CORE_ROW = 85
     CORE_COL = 16
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":3, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 
 class Hoth(Plannet):
     NAME = 'Hoth'
     CORE_ROW = 85
     CORE_COL = 20
-
+    DEFAULT_OWNER = 'Grand Army of the Republic'
+    resource_stats = {
+        "Money":1, 
+        "RawMaterials":3, 
+        "Fuel":0, 
+        "ForceSensitivity":0
+    }
 
 class Mustafar(Plannet):
     NAME = 'Mustafar'
     CORE_ROW = 90
     CORE_COL = 23
+    DEFAULT_OWNER = 'Confederacy of Independent Systems'
+    resource_stats = {
+        "Money":0, 
+        "RawMaterials":10, 
+        "Fuel":3, 
+        "ForceSensitivity":0
+    }
 
 
 # Registry of all planet classes in discovery order
 ALL_PLANNETS: list[type[Plannet]] = [
     Kenari, Serenno, AjanKloss, Yavin4, Felucia,
     Mandalore, LolaSayu, Csilla, Kijimi, Bracca,
-    CarrickStation, Kashyyk, Coruscant, Onderon, Plannet_15,
-    Kessel, Alderaan, Plannet_18, Corellia, Plannet_20,
-    HrakertStation, Plannet_22, Scarif, Jakku, Takodana,
-    Fondor, RichiSation, Kammino, Kafrene, Endor,
+    CarrickStation, Kashyyk, Coruscant, Onderon, NalHutta,
+    Kessel, Alderaan, Plannet_18, Corellia, Bothawui,
+    HrakertStation, Fondor, Scarif, Jakku, Takodana,
+    YagDhul, RichiSation, Kammino, Kafrene, Endor,
     Tatooine, Naboo, Geonosis, Bespin, DQar,
     Ferrix, Hoth, Mustafar,
 ]

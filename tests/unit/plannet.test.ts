@@ -26,13 +26,13 @@ describe('Plannet', () => {
         { row: 2, col: 2 },
         [{ row: 1, col: 2 }, { row: 2, col: 3 }],
         'Grand Army of the Republic',
-        { credits: 100, fuel: 50 },
+        { Money: 100, Fuel: 50 },
       )
       expect(p.name).toBe('Kenari')
       expect(p.cellLocation).toEqual({ row: 2, col: 2 })
       expect(p.cellsInOrbit.length).toBe(2)
       expect(p.currentOwner).toBe('Grand Army of the Republic')
-      expect(p.resourceStats).toEqual({ credits: 100, fuel: 50 })
+      expect(p.resourceStats).toEqual({ Money: 100, Fuel: 50 })
     })
   })
 
@@ -62,7 +62,7 @@ describe('Plannet', () => {
     it('assigns default resource stats', () => {
       const grid = createGrid(5, 5, SMALL_MAP)
       const plannets = Plannet.discoverAll(grid)
-      expect(plannets[0].resourceStats).toEqual({ credits: 100, fuel: 50, minerals: 30 })
+      expect(plannets[0].resourceStats).toEqual({ Money: 3, RawMaterials: 5, Fuel: 0, ForceSensitivity: 0 })
     })
 
     it('discovers multiple planets', () => {
