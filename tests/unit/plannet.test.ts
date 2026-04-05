@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Plannet } from '../../src/models/plannet'
+import { Plannet } from '../../src/types/game'
 import { createGrid } from '../../src/utils/grid'
 import { parseCellMap } from '../../src/utils/access-map'
 
@@ -22,13 +22,13 @@ describe('Plannet', () => {
   describe('constructor', () => {
     it('stores all properties', () => {
       const p = new Plannet(
-        'Coruscant',
+        'Kenari',
         { row: 2, col: 2 },
         [{ row: 1, col: 2 }, { row: 2, col: 3 }],
         'Grand Army of the Republic',
         { credits: 100, fuel: 50 },
       )
-      expect(p.name).toBe('Coruscant')
+      expect(p.name).toBe('Kenari')
       expect(p.cellLocation).toEqual({ row: 2, col: 2 })
       expect(p.cellsInOrbit.length).toBe(2)
       expect(p.currentOwner).toBe('Grand Army of the Republic')
@@ -56,7 +56,7 @@ describe('Plannet', () => {
     it('assigns a name from the predefined list', () => {
       const grid = createGrid(5, 5, SMALL_MAP)
       const plannets = Plannet.discoverAll(grid)
-      expect(plannets[0].name).toBe('Coruscant')
+      expect(plannets[0].name).toBe('Kenari')
     })
 
     it('assigns default resource stats', () => {

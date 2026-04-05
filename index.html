@@ -164,6 +164,19 @@
     .cell.cell-3 { background: #e74c3c; cursor: not-allowed; }
     .cell.cell-3:hover { filter: none; }
 
+    .planet-label {
+      position: absolute;
+      transform: translateX(-50%);
+      font-size: 7px;
+      font-weight: 600;
+      color: #f1c40f;
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      text-shadow: 0 0 3px #000, 0 0 6px #000;
+      z-index: 2;
+    }
+
     #turn-counter {
       font-size: 0.85rem;
       color: #888;

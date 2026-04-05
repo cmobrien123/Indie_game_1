@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GameState } from '../../src/models/game-state'
+import { GameState } from '../../src/api/game-state'
 
 // Starting positions:
 // Clone Trooper 1: L32 → (31,11)
@@ -42,7 +42,7 @@ describe('GameState.create', () => {
   it('discovers plannets from the grid', () => {
     const state = GameState.create()
     expect(state.plannets.length).toBe(38)
-    expect(state.plannets[0].name).toBe('Coruscant')
+    expect(state.plannets[0].name).toBe('Kenari')
   })
 
   it('pre-assigns some plannets to teams', () => {

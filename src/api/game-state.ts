@@ -1,11 +1,10 @@
-import type { Position, Grid, TeamName } from '../types/game'
+import type { Position, Grid } from '../types/game'
+import { Player, Plannet, TeamName } from '../types/game'
 import { createGrid, GRID_ROWS, GRID_COLS } from '../utils/grid'
 import { isValidMove } from '../utils/validate-move'
 import { CELL_MAP } from '../utils/access-map'
 import { findNearestCell3 } from '../utils/pathfinding'
 import { posLabel } from '../utils/labels'
-import { Player } from './player'
-import { Plannet } from './plannet'
 
 export type MoveResult = { ok: true; state: GameState } | { ok: false; reason: string }
 
@@ -58,7 +57,7 @@ export class GameState {
 
     const plannets = Plannet.discoverAll(grid)
 
-    const msg = GameState.buildMessage(grid, players[0], 1)
+    const msg = GameState.buildMessage(grid, players[0], 1, plannets)
     return new GameState(grid, players, plannets, 0, 1, 'playing', msg)
   }
 
@@ -102,7 +101,7 @@ export class GameState {
 
     const nextPlayerIndex = (this.activePlayerIndex + 1) % this.players.length
     const nextTurn = this.turn + 1
-    const msg = GameState.buildMessage(newGrid, newPlayers[nextPlayerIndex], nextTurn)
+    const msg = GameState.buildMessage(newGrid, newPlayers[nextPlayerIndex], nextTurn, newPlannets)
 
     return {
       ok: true,
@@ -110,13 +109,17 @@ export class GameState {
     }
   }
 
-  private static buildMessage(grid: Grid, player: Player, turn: number): string {
+  private static buildMessage(grid: Grid, player: Player, turn: number, plannets: Plannet[]): string {
     const cell = grid[player.position.row][player.position.col]
     const prefix = `Turn ${turn} — ${player.name} (${player.team})`
     if (cell.cellValue === 2) {
       const nearest = findNearestCell3(grid, player.position)
       if (nearest) {
-        return `${prefix} — Nearest planet: ${posLabel(nearest)}`
+        const planet = plannets.find(
+          p => p.cellLocation.row === nearest.row && p.cellLocation.col === nearest.col
+        )
+        const label = planet ? planet.name : posLabel(nearest)
+        return `${prefix} — Nearest planet: ${label}`
       }
     }
     return `${prefix} — click an adjacent cell to move`

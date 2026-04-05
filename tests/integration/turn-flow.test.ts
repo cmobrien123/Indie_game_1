@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GameState } from '../../src/models/game-state'
+import { GameState } from '../../src/api/game-state'
 import { getHexNeighborOffsets } from '../../src/utils/grid'
 
 describe('multi-turn flow', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Player } from '../../src/models/player'
+import { Player } from '../../src/types/game'
 
 describe('Player', () => {
   it('stores id, name, team, and position', () => {

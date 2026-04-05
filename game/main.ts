@@ -1,4 +1,4 @@
-import { GameState } from '../src/models/game-state'
+import { GameState } from '../src/api/game-state'
 import { getAdjacentCells, GRID_ROWS, GRID_COLS } from '../src/utils/grid'
 import { exportTurnCSV } from '../src/utils/csv-export'
 import { posLabel } from '../src/utils/labels'
@@ -56,6 +56,12 @@ const renderGrid = (s: GameState): void => {
     getAdjacentCells(s.grid, active.position).map(c => `${c.position.row},${c.position.col}`)
   )
 
+  // Build a map of core position -> planet name
+  const planetNameByCell = new Map<string, string>()
+  for (const planet of s.plannets) {
+    planetNameByCell.set(`${planet.cellLocation.row},${planet.cellLocation.col}`, planet.name)
+  }
+
   // Build a map of cell -> players on that cell
   const playersByCell = new Map<string, typeof s.players>()
   for (const player of s.players) {
@@ -100,6 +106,17 @@ const renderGrid = (s: GameState): void => {
 
       gridContainer.appendChild(el)
     }
+  }
+
+  // Render planet name labels outside cells (clip-path would hide children)
+  for (const planet of s.plannets) {
+    const { row, col } = planet.cellLocation
+    const label = document.createElement('span')
+    label.className = 'planet-label'
+    label.textContent = planet.name
+    label.style.left = `${col * HEX_W + (row % 2 === 1 ? ODD_OFFSET : 0) + HEX_W / 2}px`
+    label.style.top  = `${row * HEX_V_STEP - 10}px`
+    gridContainer.appendChild(label)
   }
 
   statusEl.textContent = s.lastMessage
