@@ -111,7 +111,8 @@ class Kenari(Plannet):
     resource_stats = {
         "Money":3, 
         "RawMaterials":5, 
-        "Fuel":0
+        "Fuel":0, 
+        "ForceSensitivity":0
     }
 
 
@@ -123,7 +124,8 @@ class Serenno(Plannet):
     resource_stats = {
         "Money":5, 
         "RawMaterials":1, 
-        "Fuel":0
+        "Fuel":0, 
+        "ForceSensitivity":0
     }
 
 class AjanKloss(Plannet):
@@ -134,7 +136,8 @@ class AjanKloss(Plannet):
     resource_stats = {
         "Money":1, 
         "RawMaterials":1, 
-        "Fuel":0
+        "Fuel":0, 
+        "ForceSensitivity":0
     }
 
 

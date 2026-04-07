@@ -35,7 +35,8 @@ const colLabelsEl    = document.getElementById('col-labels')     as HTMLDivEleme
 const rowLabelsEl    = document.getElementById('row-labels')     as HTMLDivElement
 const statusEl       = document.getElementById('status')         as HTMLParagraphElement
 const turnCounterEl  = document.getElementById('turn-counter')   as HTMLParagraphElement
-const teamStatsEl    = document.getElementById('team-stats')     as HTMLDivElement
+const teamStatsLeft  = document.getElementById('team-stats-left')  as HTMLDivElement
+const teamStatsRight = document.getElementById('team-stats-right') as HTMLDivElement
 const battleOverlay  = document.getElementById('battle-overlay')  as HTMLDivElement
 const battleModal    = document.getElementById('battle-modal')    as HTMLDivElement
 const cellTooltip    = document.getElementById('cell-tooltip')    as HTMLDivElement
@@ -186,6 +187,7 @@ const renderGrid = (s: GameState): void => {
   }
 
   renderTeamStats(s)
+  renderPlanetSummary(s)
   renderBattle(s)
 }
 
@@ -234,7 +236,8 @@ const renderTeamStats = (s: GameState): void => {
     { name: 'Confederacy of Independent Systems', label: 'Confederacy of Independent Systems', cls: 'cis' },
   ]
 
-  teamStatsEl.innerHTML = ''
+  teamStatsLeft.innerHTML = ''
+  teamStatsRight.innerHTML = ''
 
   for (const team of teams) {
     const playerCount = s.players.filter(p => p.team === team.name).length
@@ -273,16 +276,92 @@ const renderTeamStats = (s: GameState): void => {
       ).join('')}
     `
 
-    // GAR: detail on left, summary on right
-    // CIS: summary on left, detail on right
     if (team.cls === 'gar') {
-      teamStatsEl.appendChild(detailPanel)
-      teamStatsEl.appendChild(panel)
+      teamStatsLeft.appendChild(detailPanel)
+      teamStatsLeft.appendChild(panel)
     } else {
-      teamStatsEl.appendChild(panel)
-      teamStatsEl.appendChild(detailPanel)
+      teamStatsRight.appendChild(panel)
+      teamStatsRight.appendChild(detailPanel)
     }
   }
+}
+
+const planetSummaryEl = document.getElementById('planet-summary') as HTMLDivElement
+
+type PlanetSortKey = 'Name' | 'Owner' | 'Money' | 'RawMaterials' | 'Fuel'
+let planetSortKey: PlanetSortKey = 'Name'
+let planetSortAsc = true
+
+const getPlanetSortValue = (p: { name: string; currentOwner: string | null; resourceStats: Record<string, number> }, key: PlanetSortKey): string | number => {
+  switch (key) {
+    case 'Name': return p.name
+    case 'Owner': return p.currentOwner ?? ''
+    case 'Money': return p.resourceStats.Money ?? 0
+    case 'RawMaterials': return p.resourceStats.RawMaterials ?? 0
+    case 'Fuel': return p.resourceStats.Fuel ?? 0
+  }
+}
+
+const renderPlanetSummary = (s: GameState): void => {
+  const sorted = [...s.plannets].sort((a, b) => {
+    const va = getPlanetSortValue(a, planetSortKey)
+    const vb = getPlanetSortValue(b, planetSortKey)
+    let cmp = 0
+    if (typeof va === 'string' && typeof vb === 'string') {
+      cmp = va.localeCompare(vb)
+    } else {
+      cmp = (va as number) - (vb as number)
+    }
+    return planetSortAsc ? cmp : -cmp
+  })
+
+  const rows = sorted.map(p => {
+    let ownerClass = 'owner-none'
+    let ownerLabel = 'Unowned'
+    if (p.currentOwner === 'Grand Army of the Republic') {
+      ownerClass = 'owner-gar'
+      ownerLabel = 'Republic'
+    } else if (p.currentOwner === 'Confederacy of Independent Systems') {
+      ownerClass = 'owner-cis'
+      ownerLabel = 'Separatists'
+    }
+    return `<tr>
+      <td>${p.name}</td>
+      <td class="${ownerClass}">${ownerLabel}</td>
+      <td>${p.resourceStats.Money ?? 0}</td>
+      <td>${p.resourceStats.RawMaterials ?? 0}</td>
+      <td>${p.resourceStats.Fuel ?? 0}</td>
+    </tr>`
+  }).join('')
+
+  const arrow = (key: PlanetSortKey) =>
+    planetSortKey === key ? (planetSortAsc ? ' ▲' : ' ▼') : ''
+
+  const columns: PlanetSortKey[] = ['Name', 'Owner', 'Money', 'RawMaterials', 'Fuel']
+  const headerCells = columns.map(key =>
+    `<th class="sortable" data-sort-key="${key}">${key}${arrow(key)}</th>`
+  ).join('')
+
+  planetSummaryEl.innerHTML = `
+    <h3>Planet Summary</h3>
+    <table>
+      <thead><tr>${headerCells}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `
+
+  planetSummaryEl.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = (th as HTMLElement).dataset['sortKey'] as PlanetSortKey
+      if (planetSortKey === key) {
+        planetSortAsc = !planetSortAsc
+      } else {
+        planetSortKey = key
+        planetSortAsc = true
+      }
+      renderPlanetSummary(s)
+    })
+  })
 }
 
 // ── Battle UI ────────────────────────────────────────

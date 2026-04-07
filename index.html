@@ -15,10 +15,35 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       gap: 16px;
-      padding: 24px;
+      padding: 12px 24px;
     }
+
+    #top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+      gap: 12px;
+    }
+
+    #top-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    #team-stats-left, #team-stats-right {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex: 1;
+    }
+
+    #team-stats-left { justify-content: flex-start; }
+    #team-stats-right { justify-content: flex-end; }
 
     h1 {
       font-size: 1.5rem;
@@ -256,13 +281,6 @@
 
     /* ── Team stats + player details layout ─────── */
 
-    #team-stats {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-      align-items: flex-start;
-    }
-
     .player-detail-table {
       background: #16213e;
       border: 1px solid #0f3460;
@@ -447,14 +465,78 @@
 
     .battle-outcome.win { color: #2ecc71; }
     .battle-outcome.tie { color: #f39c12; }
+
+    /* ── Planet summary table ────────────────────── */
+
+    #planet-summary {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 10px 16px;
+      width: 100%;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    #planet-summary h3 {
+      font-size: 0.75rem;
+      color: #a8d8ea;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    #planet-summary table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.65rem;
+    }
+
+    #planet-summary th {
+      color: #999;
+      font-weight: 600;
+      text-align: left;
+      padding: 3px 8px;
+      border-bottom: 1px solid #0f3460;
+      position: sticky;
+      top: 0;
+      background: #16213e;
+    }
+
+    #planet-summary td {
+      color: #ccc;
+      padding: 3px 8px;
+    }
+
+    #planet-summary tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    #planet-summary th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #planet-summary th.sortable:hover {
+      color: #a8d8ea;
+    }
+
+    #planet-summary .owner-gar { color: #27ae60; }
+    #planet-summary .owner-cis { color: #e91e8c; }
+    #planet-summary .owner-none { color: #666; }
   </style>
 </head>
 <body>
-  <h1>Hex Grid Game</h1>
-  <p id="turn-counter"></p>
-  <button id="end-move-btn">End Move</button>
-  <button id="create-player-btn">Create Player</button>
-  <div id="team-stats"></div>
+  <div id="top-bar">
+    <div id="team-stats-left"></div>
+    <div id="top-center">
+      <h1>Hex Grid Game</h1>
+      <p id="turn-counter"></p>
+      <button id="end-move-btn">End Move</button>
+      <button id="create-player-btn">Create Player</button>
+    </div>
+    <div id="team-stats-right"></div>
+  </div>
+  <div id="planet-summary"></div>
   <p id="status">Loading...</p>
 
   <div id="board">
