@@ -67,3 +67,17 @@ npm run typecheck # Type check browser and server code
 - [ ] Create process for tagging (ex commitizen)
 - [ ] Create UI needed items
 - [ ] Create beutification list (ex. planets, background, player icons that change with experience, ability to name players)
+
+## beutification list
+- create background for the map
+- create icons for the units
+  - GAR:
+    - Rookie: Phase 1 Clone trooper helmet
+    - Vet: Phase 2 Clone trooper helmet
+    - EliteUnit: Ability to choose from list of helmet from lore
+  - CIS:
+    - Rookie: battle droid
+    - Vet: super battle droid
+    - EliteUnit: Ability to choose from list of droids from lore
+- create plannet icons
+- fix blue cells (make them normal movement cells)
