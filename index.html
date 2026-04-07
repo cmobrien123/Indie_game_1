@@ -195,6 +195,20 @@
       line-height: 1.3;
     }
 
+    #cell-tooltip {
+      position: fixed;
+      display: none;
+      padding: 3px 7px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+
     #turn-counter {
       font-size: 0.85rem;
       color: #888;
@@ -415,6 +429,7 @@
   <button id="end-move-btn">End Move</button>
   <button id="create-player-btn">Create Player</button>
   <div id="team-stats"></div>
+  <div id="cell-tooltip"></div>
   <div id="battle-overlay" style="display:none;">
     <div id="battle-modal"></div>
   </div>

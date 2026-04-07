@@ -37,6 +37,7 @@ const turnCounterEl  = document.getElementById('turn-counter')   as HTMLParagrap
 const teamStatsEl    = document.getElementById('team-stats')     as HTMLDivElement
 const battleOverlay  = document.getElementById('battle-overlay')  as HTMLDivElement
 const battleModal    = document.getElementById('battle-modal')    as HTMLDivElement
+const cellTooltip    = document.getElementById('cell-tooltip')    as HTMLDivElement
 
 const renderLabels = (): void => {
   colLabelsEl.innerHTML = ''
@@ -402,6 +403,25 @@ createPlayerBtn.addEventListener('click', () => {
   statusEl.textContent = 'Click a friendly orbit cell to place new unit'
   statusEl.className = ''
   renderGrid(state)
+})
+
+gridContainer.addEventListener('mousemove', (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  const cell = target.closest('.cell') as HTMLElement | null
+  if (!cell) {
+    cellTooltip.style.display = 'none'
+    return
+  }
+  const row = Number(cell.dataset['row'])
+  const col = Number(cell.dataset['col'])
+  cellTooltip.textContent = `${colLabelChar(col)}${rowLabelNum(row)}`
+  cellTooltip.style.display = 'block'
+  cellTooltip.style.left = `${e.clientX + 12}px`
+  cellTooltip.style.top  = `${e.clientY + 12}px`
+})
+
+gridContainer.addEventListener('mouseleave', () => {
+  cellTooltip.style.display = 'none'
 })
 
 renderLabels()
