@@ -254,12 +254,51 @@
 
     .cell.placement-target:hover { filter: brightness(1.5); }
 
-    /* ── Team stats panel ────────────────────────── */
+    /* ── Team stats + player details layout ─────── */
 
     #team-stats {
       display: flex;
-      gap: 24px;
+      gap: 12px;
       margin-top: 8px;
+      align-items: flex-start;
+    }
+
+    .player-detail-table {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 280px;
+    }
+
+    .player-detail-table h3 {
+      font-size: 0.7rem;
+      color: #a8d8ea;
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .player-detail-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.65rem;
+    }
+
+    .player-detail-table th {
+      color: #999;
+      font-weight: 600;
+      text-align: left;
+      padding: 3px 5px;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .player-detail-table td {
+      color: #ccc;
+      padding: 3px 5px;
+    }
+
+    .player-detail-table tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.03);
     }
 
     .team-panel {
@@ -412,6 +451,10 @@
 </head>
 <body>
   <h1>Hex Grid Game</h1>
+  <p id="turn-counter"></p>
+  <button id="end-move-btn">End Move</button>
+  <button id="create-player-btn">Create Player</button>
+  <div id="team-stats"></div>
   <p id="status">Loading...</p>
 
   <div id="board">
@@ -424,11 +467,6 @@
       <div id="grid-container"></div>
     </div>
   </div>
-
-  <p id="turn-counter"></p>
-  <button id="end-move-btn">End Move</button>
-  <button id="create-player-btn">Create Player</button>
-  <div id="team-stats"></div>
   <div id="cell-tooltip"></div>
   <div id="battle-overlay" style="display:none;">
     <div id="battle-modal"></div>

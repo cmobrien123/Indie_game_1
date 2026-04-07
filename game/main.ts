@@ -2,6 +2,7 @@ import { GameState } from '../src/api/game-state'
 import { getAdjacentCells, GRID_ROWS, GRID_COLS } from '../src/utils/grid'
 import { exportTurnCSV } from '../src/utils/csv-export'
 import { posLabel } from '../src/utils/labels'
+import { findNearestCell3 } from '../src/utils/pathfinding'
 import type { Position } from '../src/types/game'
 
 // Hex cell dimensions (pointy-top, odd-r offset)
@@ -163,9 +164,9 @@ const renderGrid = (s: GameState): void => {
     const { row, col } = player.position
     const label = document.createElement('span')
     label.className = 'player-label'
-    label.innerHTML = `${player.name}<br>(${player.experienceLevel})`
+    label.innerHTML = `${player.name}<br>(${player.experienceLevel})<br>${player.infantry}`
     label.style.left = `${col * HEX_W + (row % 2 === 1 ? ODD_OFFSET : 0) + HEX_W / 2}px`
-    label.style.top  = `${row * HEX_V_STEP - 18}px`
+    label.style.top  = `${row * HEX_V_STEP - 26}px`
     gridContainer.appendChild(label)
   }
 
@@ -190,6 +191,43 @@ const renderGrid = (s: GameState): void => {
 
 const RESOURCE_KEYS = ['Money', 'RawMaterials', 'Fuel', 'ForceSensitivity']
 
+const getNearestPlanetName = (s: GameState, playerPos: Position): string => {
+  const nearest = findNearestCell3(s.grid, playerPos)
+  if (!nearest) return '—'
+  const planet = s.plannets.find(
+    p => p.cellLocation.row === nearest.row && p.cellLocation.col === nearest.col
+  )
+  return planet ? planet.name : '—'
+}
+
+const buildPlayerDetailTable = (s: GameState, teamName: string): string => {
+  const teamPlayers = s.players.filter(p => p.team === teamName)
+  if (teamPlayers.length === 0) return '<div style="font-size:0.65rem;color:#666;">No players</div>'
+
+  const rows = teamPlayers.map(p =>
+    `<tr>
+      <td>${p.name}</td>
+      <td>${p.infantry}</td>
+      <td>${p.experienceLevel}</td>
+      <td>${p.experience}</td>
+      <td>${getNearestPlanetName(s, p.position)}</td>
+    </tr>`
+  ).join('')
+
+  return `
+    <table>
+      <thead><tr>
+        <th>Name</th>
+        <th>Infantry</th>
+        <th>Level</th>
+        <th>XP</th>
+        <th>Nearest Planet</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `
+}
+
 const renderTeamStats = (s: GameState): void => {
   const teams: { name: string; label: string; cls: string }[] = [
     { name: 'Grand Army of the Republic', label: 'Grand Army of the Republic', cls: 'gar' },
@@ -213,6 +251,15 @@ const renderTeamStats = (s: GameState): void => {
 
     const accumulated = s.teamResources[team.name] ?? {}
 
+    // Player detail table (left of GAR summary, right of CIS summary)
+    const detailPanel = document.createElement('div')
+    detailPanel.className = 'player-detail-table'
+    detailPanel.innerHTML = `
+      <h3>${team.label} — Player Details</h3>
+      ${buildPlayerDetailTable(s, team.name)}
+    `
+
+    // Team summary panel
     const panel = document.createElement('div')
     panel.className = `team-panel ${team.cls}`
     panel.innerHTML = `
@@ -225,7 +272,16 @@ const renderTeamStats = (s: GameState): void => {
         `<div class="stat-row"><span class="stat-label">${k}</span><span class="stat-value">${accumulated[k] ?? 0} <span style="color:#888">(+${income[k]}/turn)</span></span></div>`
       ).join('')}
     `
-    teamStatsEl.appendChild(panel)
+
+    // GAR: detail on left, summary on right
+    // CIS: summary on left, detail on right
+    if (team.cls === 'gar') {
+      teamStatsEl.appendChild(detailPanel)
+      teamStatsEl.appendChild(panel)
+    } else {
+      teamStatsEl.appendChild(panel)
+      teamStatsEl.appendChild(detailPanel)
+    }
   }
 }
 
