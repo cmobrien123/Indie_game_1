@@ -65,7 +65,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      background: #16213e;
+      background: rgba(22, 33, 62, 0.85);
       padding: 16px;
       border-radius: 10px;
       border: 1px solid #0f3460;
@@ -122,6 +122,10 @@
     /* Hex grid container — cells are absolutely positioned inside */
     #grid-container {
       position: relative;
+      background-image: url('game/images/background_1.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
 
     /* ── Hex cells ────────────────────────────────── */
@@ -132,7 +136,7 @@
       width: 30px;
       height: 34px;
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      background: #0f3460;
+      background: rgba(15, 52, 96, 0.6);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -147,11 +151,11 @@
     }
 
     .cell.occupied.team-gar {
-      background: #27ae60;
+      background: rgba(39, 174, 96, 0.7);
     }
 
     .cell.occupied.team-cis {
-      background: #e91e8c;
+      background: rgba(233, 30, 140, 0.7);
     }
 
     .cell.occupied.active-player {
@@ -174,7 +178,7 @@
     }
 
     .cell.adjacent {
-      background: #1e6091;
+      background: rgba(30, 96, 145, 0.6);
       outline: none;
       filter: brightness(1.15);
     }
@@ -182,15 +186,22 @@
     .cell.adjacent:hover { filter: brightness(1.4); }
 
     /* Cell value colors */
-    .cell.cell-0 { background: #555; cursor: not-allowed; }
+    .cell.cell-0 { background: rgba(85, 85, 85, 0.7); cursor: not-allowed; }
     .cell.cell-0:hover { filter: none; }
-    .cell.cell-1 { background: #e67e22; }
-    .cell.cell-2 { background: #3498db; }
-    .cell.cell-3 { background: #e74c3c; cursor: not-allowed; }
+    .cell.cell-1 { background: rgba(230, 126, 34, 0.6); }
+    .cell.cell-2 { background: rgba(52, 152, 219, 0.6); }
+    .cell.cell-3 { background: rgba(231, 76, 60, 0.7); cursor: not-allowed; }
     .cell.cell-3:hover { filter: none; }
 
-    .cell.orbit-owned.orbit-team-gar { background: #1a6b3a; }
-    .cell.orbit-owned.orbit-team-cis { background: #8b1a5c; }
+    .planet-img {
+      width: 67%;
+      height: 67%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .cell.orbit-owned.orbit-team-gar { background: rgba(26, 107, 58, 0.6); }
+    .cell.orbit-owned.orbit-team-cis { background: rgba(139, 26, 92, 0.6); }
 
     .planet-label {
       position: absolute;
@@ -272,7 +283,7 @@
     #create-player-btn:hover { background: #1f6da0; }
 
     .cell.placement-target {
-      background: #2ecc71 !important;
+      background: rgba(46, 204, 113, 0.7) !important;
       filter: brightness(1.2);
       cursor: crosshair;
     }

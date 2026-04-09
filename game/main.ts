@@ -27,6 +27,10 @@ const SHORT_TEAM: Record<string, string> = {
   'Confederacy of Independent Systems': 'Separatists',
 }
 
+const PLANET_IMAGES: Record<string, string> = {
+  'Tatooine': 'game/images/yellow_planet.png',
+}
+
 let state = GameState.create()
 let placingPlayer = false
 
@@ -119,6 +123,15 @@ const renderGrid = (s: GameState): void => {
       el.style.top       = `${row * HEX_V_STEP}px`
 
       el.classList.add(`cell-${cell.cellValue}`)
+
+      // Add planet image if this is a planet core with an assigned image
+      const pName = planetNameByCell.get(`${row},${col}`)
+      if (pName && PLANET_IMAGES[pName]) {
+        const img = document.createElement('img')
+        img.src = PLANET_IMAGES[pName]
+        img.className = 'planet-img'
+        el.appendChild(img)
+      }
 
       const cellKey = `${row},${col}`
       const playersHere = playersByCell.get(cellKey)
