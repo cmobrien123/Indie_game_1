@@ -151,12 +151,13 @@ const TEAM_UNIT_PREFIX: Record<string, string> = {
 }
 
 const STARTING_PLAYERS: { name: string; team: TeamName; position: Position; experience?: number }[] = [
-  { name: 'Clone Trooper 1', team: 'Grand Army of the Republic', position: { row: 31, col: 11 } },
-  { name: 'Clone Trooper 2', team: 'Grand Army of the Republic', position: { row: 40, col: 18 }, experience: 50 },
-  { name: 'Clone Trooper 3', team: 'Grand Army of the Republic', position: { row: 29, col: 18 }, experience: 200 },
-  { name: 'Battle Droid 1', team: 'Confederacy of Independent Systems', position: { row: 78, col: 28 } },
-  { name: 'Battle Droid 2', team: 'Confederacy of Independent Systems', position: { row: 2, col: 23 } },
-  { name: 'Battle Droid 3', team: 'Confederacy of Independent Systems', position: { row: 11, col: 27 } },
+  { name: 'Clone Trooper 1', team: 'Grand Army of the Republic', position: { row: 71, col: 36 } },
+  { name: 'Clone Trooper 2', team: 'Grand Army of the Republic', position: { row: 48, col: 18 }, experience: 50 },
+  { name: 'Clone Trooper 3', team: 'Grand Army of the Republic', position: { row: 24, col: 14 }, experience: 200 },
+  { name: 'Battle Droid 1', team: 'Confederacy of Independent Systems', position: { row: 77, col: 38 } },
+  { name: 'Battle Droid 2', team: 'Confederacy of Independent Systems', position: { row: 89, col: 22 } },
+  { name: 'Battle Droid 3', team: 'Confederacy of Independent Systems', position: { row: 30, col: 30 } },
+  { name: 'Battle Droid 4', team: 'Confederacy of Independent Systems', position: { row: 7, col: 18 } },
 ]
 
 export class GameState {

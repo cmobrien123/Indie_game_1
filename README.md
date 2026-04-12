@@ -1,4 +1,4 @@
-# Hex Grid Game
+# Colin Galatic Conquest
 
 A browser-based turn-based game built with TypeScript. The player moves an avatar across a 10×10 hex grid, restricted to cells marked accessible in a CSV access map. A local Express server saves a snapshot of game state to `junk_folder/game-state.csv` after every move.
 

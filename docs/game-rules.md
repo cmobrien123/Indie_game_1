@@ -1,4 +1,4 @@
-# Hex Grid Game — Rules & How to Play
+# Colin Galatic Conquest — Rules & How to Play
 
 ## How to Start
 

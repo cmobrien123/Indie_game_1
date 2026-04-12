@@ -3,13 +3,13 @@ import { GameState } from '../../src/api/game-state'
 import { getHexNeighborOffsets } from '../../src/utils/grid'
 
 describe('GameState.create', () => {
-  it('creates 6 players across 2 teams', () => {
+  it('creates 7 players across 2 teams', () => {
     const state = GameState.create()
-    expect(state.players.length).toBe(6)
+    expect(state.players.length).toBe(7)
     const gar = state.players.filter(p => p.team === 'Grand Army of the Republic')
     const cis = state.players.filter(p => p.team === 'Confederacy of Independent Systems')
     expect(gar.length).toBe(3)
-    expect(cis.length).toBe(3)
+    expect(cis.length).toBe(4)
   })
 
   it('places each player in orbit of a planet owned by their team', () => {
