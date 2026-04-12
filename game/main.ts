@@ -27,6 +27,12 @@ const SHORT_TEAM: Record<string, string> = {
   'Confederacy of Independent Systems': 'Separatists',
 }
 
+const PLAYER_LEVEL_IMAGES: Record<string, string> = {
+  'Rookie': 'game/images/chess_detail_1.png',
+  'Vet': 'game/images/chess_detail_2.png',
+  'EliteUnit': 'game/images/chess_detail_3a.png',
+}
+
 const PLANET_IMAGES: Record<string, string> = {
   'Tatooine': 'game/images/yellow_planet.png',
 }
@@ -142,10 +148,20 @@ const renderGrid = (s: GameState): void => {
         el.classList.add('occupied', teamClass)
         if (isActive) el.classList.add('active-player')
 
-        const marker = document.createElement('span')
-        marker.className = 'player-marker'
-        marker.textContent = playersHere.length > 1 ? `▲${playersHere.length}` : '▲'
-        el.appendChild(marker)
+        const topPlayer = playersHere.find(p => p.id === active.id) ?? playersHere[0]
+        const levelImg = PLAYER_LEVEL_IMAGES[topPlayer.experienceLevel]
+        if (levelImg) {
+          const img = document.createElement('img')
+          img.src = levelImg
+          img.className = 'player-icon'
+          el.appendChild(img)
+        }
+        if (playersHere.length > 1) {
+          const count = document.createElement('span')
+          count.className = 'player-count'
+          count.textContent = String(playersHere.length)
+          el.appendChild(count)
+        }
       } else if (adjacentSet.has(cellKey)) {
         el.classList.add('adjacent')
       }

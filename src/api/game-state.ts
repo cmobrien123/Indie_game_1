@@ -150,10 +150,10 @@ const TEAM_UNIT_PREFIX: Record<string, string> = {
   'Confederacy of Independent Systems': 'Battle Droid',
 }
 
-const STARTING_PLAYERS: { name: string; team: TeamName; position: Position }[] = [
+const STARTING_PLAYERS: { name: string; team: TeamName; position: Position; experience?: number }[] = [
   { name: 'Clone Trooper 1', team: 'Grand Army of the Republic', position: { row: 31, col: 11 } },
-  { name: 'Clone Trooper 2', team: 'Grand Army of the Republic', position: { row: 40, col: 18 } },
-  { name: 'Clone Trooper 3', team: 'Grand Army of the Republic', position: { row: 29, col: 18 } },
+  { name: 'Clone Trooper 2', team: 'Grand Army of the Republic', position: { row: 40, col: 18 }, experience: 50 },
+  { name: 'Clone Trooper 3', team: 'Grand Army of the Republic', position: { row: 29, col: 18 }, experience: 200 },
   { name: 'Battle Droid 1', team: 'Confederacy of Independent Systems', position: { row: 78, col: 28 } },
   { name: 'Battle Droid 2', team: 'Confederacy of Independent Systems', position: { row: 2, col: 23 } },
   { name: 'Battle Droid 3', team: 'Confederacy of Independent Systems', position: { row: 11, col: 27 } },
@@ -262,9 +262,11 @@ export class GameState {
   static create(): GameState {
     const grid = createGrid(GRID_ROWS, GRID_COLS, CELL_MAP)
 
-    const players = STARTING_PLAYERS.map((sp, id) =>
-      new Player(id, sp.name, sp.team, sp.position)
-    )
+    const players = STARTING_PLAYERS.map((sp, id) => {
+      const p = new Player(id, sp.name, sp.team, sp.position)
+      if (sp.experience) p.experience = sp.experience
+      return p
+    })
 
     const plannets = Plannet.discoverAll(grid)
 
